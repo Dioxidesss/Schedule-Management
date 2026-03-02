@@ -1,0 +1,757 @@
+openapi: 3.1.0
+info:
+  title: Isomer Backend API
+  version: 1.0.0
+  description: Strict API contract inferred from Isomer UI + planning docs.
+servers:
+  - url: https://api.isomer.local
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+  - name: Profile
+  - name: Appointments
+  - name: Dashboard
+  - name: Devices
+  - name: Kiosk
+  - name: Team
+  - name: Billing
+paths:
+  /auth/signup:
+    post:
+      tags: [Auth]
+      security: []
+      operationId: signUp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [full_name, email, password, company_name]
+              properties:
+                full_name: { type: string, minLength: 1 }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                company_name: { type: string, minLength: 1 }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSession'
+        '409': { $ref: '#/components/responses/ErrorConflict' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401': { $ref: '#/components/responses/ErrorUnauthorized' }
+
+  /auth/oauth/google:
+    post:
+      tags: [Auth]
+      security: []
+      operationId: oauthGoogle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [google_id_token]
+              properties:
+                google_id_token: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401': { $ref: '#/components/responses/ErrorUnauthorized' }
+
+  /me:
+    get:
+      tags: [Profile]
+      operationId: getMe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserProfile' }
+    patch:
+      tags: [Profile]
+      operationId: updateMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                full_name: { type: string }
+                phone: { type: string }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserProfile' }
+
+  /facilities/{facility_id}/dashboard:
+    get:
+      tags: [Dashboard]
+      operationId: getFacilityDashboard
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Dashboard payload
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [facility_id, date, appointments, yard_queue, doors, devices]
+                properties:
+                  facility_id: { type: string, format: uuid }
+                  date: { type: string, format: date }
+                  appointments:
+                    type: array
+                    items: { $ref: '#/components/schemas/Appointment' }
+                  yard_queue:
+                    type: array
+                    items: { $ref: '#/components/schemas/YardQueueItem' }
+                  doors:
+                    type: array
+                    items: { $ref: '#/components/schemas/DoorStatus' }
+                  devices:
+                    type: array
+                    items: { $ref: '#/components/schemas/Device' }
+                  feature_flags:
+                    $ref: '#/components/schemas/FeatureFlags'
+
+  /facilities/{facility_id}/appointments:
+    get:
+      tags: [Appointments]
+      operationId: listAppointments
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - in: query
+          name: date
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: status
+          schema: { $ref: '#/components/schemas/AppointmentStatus' }
+        - in: query
+          name: po_number
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Paged appointments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedAppointments'
+    post:
+      tags: [Appointments]
+      operationId: createAppointment
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [po_number, carrier_name, scheduled_start, load_type]
+              properties:
+                po_number: { type: string }
+                carrier_name: { type: string }
+                scheduled_start: { type: string, format: date-time }
+                scheduled_end: { type: string, format: date-time }
+                load_type: { $ref: '#/components/schemas/LoadType' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [appointment_id, status]
+                properties:
+                  appointment_id: { type: string, format: uuid }
+                  status: { $ref: '#/components/schemas/AppointmentStatus' }
+                  provisional_door_id: { type: [string, 'null'], format: uuid }
+        '422': { $ref: '#/components/responses/ErrorValidation' }
+
+  /appointments/{appointment_id}:
+    get:
+      tags: [Appointments]
+      operationId: getAppointment
+      parameters:
+        - $ref: '#/components/parameters/AppointmentId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Appointment' }
+        '404': { $ref: '#/components/responses/ErrorNotFound' }
+    patch:
+      tags: [Appointments]
+      operationId: updateAppointment
+      parameters:
+        - $ref: '#/components/parameters/AppointmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { $ref: '#/components/schemas/AppointmentStatus' }
+                door_id: { type: [string, 'null'], format: uuid }
+                scheduled_start: { type: string, format: date-time }
+                scheduled_end: { type: string, format: date-time }
+                carrier_name: { type: string }
+                load_type: { $ref: '#/components/schemas/LoadType' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Appointment' }
+        '409': { $ref: '#/components/responses/ErrorConflict' }
+
+  /gatehouse/check-in:
+    post:
+      tags: [Kiosk]
+      operationId: gatehouseCheckin
+      security:
+        - deviceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [facility_id, identifier, checked_in_at]
+              properties:
+                facility_id: { type: string, format: uuid }
+                identifier: { type: string, description: PO number preferred, license plate accepted }
+                checked_in_at: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Check-in result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [appointment_id, match_status]
+                properties:
+                  appointment_id: { type: string, format: uuid }
+                  match_status: { type: string, enum: [matched, not_found, ambiguous] }
+                  assigned_door_id: { type: [string, 'null'], format: uuid }
+                  queue_position: { type: [integer, 'null'], minimum: 1 }
+
+  /dock-worker/start-unload:
+    post:
+      tags: [Kiosk]
+      operationId: startUnload
+      security:
+        - deviceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [appointment_id, actual_start]
+              properties:
+                appointment_id: { type: string, format: uuid }
+                actual_start: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Appointment' }
+
+  /dock-worker/complete-unload:
+    post:
+      tags: [Kiosk]
+      operationId: completeUnload
+      security:
+        - deviceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [appointment_id, actual_end]
+              properties:
+                appointment_id: { type: string, format: uuid }
+                actual_end: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Appointment' }
+
+  /facilities/{facility_id}/devices:
+    get:
+      tags: [Devices]
+      operationId: listDevices
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      responses:
+        '200':
+          description: Device list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Device' }
+
+  /facilities/{facility_id}/devices/pairing-codes:
+    post:
+      tags: [Devices]
+      operationId: createPairingCode
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_name, role]
+              properties:
+                device_name: { type: string }
+                role: { $ref: '#/components/schemas/DeviceRole' }
+                door_id: { type: [string, 'null'], format: uuid }
+                is_locked_to_facility: { type: boolean, default: true }
+      responses:
+        '201':
+          description: Pairing code created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pairing_code, expires_at]
+                properties:
+                  pairing_code: { type: string, pattern: '^[0-9]{6}$' }
+                  expires_at: { type: string, format: date-time }
+
+  /devices/pair:
+    post:
+      tags: [Devices]
+      security: []
+      operationId: pairDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, device_model, device_name]
+              properties:
+                code: { type: string, pattern: '^[0-9]{6}$' }
+                device_model: { type: string }
+                device_name: { type: string }
+      responses:
+        '200':
+          description: Device paired
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [device_id, facility_id, role, device_token]
+                properties:
+                  device_id: { type: string, format: uuid }
+                  facility_id: { type: string, format: uuid }
+                  role: { $ref: '#/components/schemas/DeviceRole' }
+                  door_id: { type: [string, 'null'], format: uuid }
+                  device_token: { type: string }
+        '410': { $ref: '#/components/responses/ErrorGone' }
+
+  /devices/{device_id}/heartbeat:
+    post:
+      tags: [Devices]
+      operationId: deviceHeartbeat
+      security:
+        - deviceToken: []
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [observed_at, status]
+              properties:
+                observed_at: { type: string, format: date-time }
+                status: { type: string, enum: [online] }
+      responses:
+        '200':
+          description: Heartbeat accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, const: true }
+
+  /admin/team:
+    get:
+      tags: [Team]
+      operationId: listTeam
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: facility_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: status
+          schema: { type: string, enum: [active, invited, revoked, expired] }
+      responses:
+        '200':
+          description: Team records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [user_id, full_name, email, facility_id, status]
+                  properties:
+                    user_id: { type: string, format: uuid }
+                    full_name: { type: string }
+                    email: { type: string, format: email }
+                    facility_id: { type: string, format: uuid }
+                    status: { type: string }
+
+  /admin/team/invites:
+    post:
+      tags: [Team]
+      operationId: createInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [full_name, email, facility_id]
+              properties:
+                full_name: { type: string }
+                email: { type: string, format: email }
+                facility_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [invite_id, status, expires_at]
+                properties:
+                  invite_id: { type: string, format: uuid }
+                  status: { type: string, enum: [pending] }
+                  expires_at: { type: string, format: date-time }
+
+  /admin/billing/subscription:
+    get:
+      tags: [Billing]
+      operationId: getSubscription
+      responses:
+        '200':
+          description: Current subscription
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [plan_code, base_price_myr_sen, per_truck_rate_myr_sen, current_period_start, current_period_end, trucks_this_cycle]
+                properties:
+                  plan_code: { type: string, enum: [free, premium] }
+                  base_price_myr_sen: { type: integer }
+                  per_truck_rate_myr_sen: { type: integer }
+                  current_period_start: { type: string, format: date-time }
+                  current_period_end: { type: string, format: date-time }
+                  trucks_this_cycle: { type: integer, minimum: 0 }
+
+  /admin/billing/payment-methods:
+    get:
+      tags: [Billing]
+      operationId: listPaymentMethods
+      responses:
+        '200':
+          description: Payment methods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethod'
+    post:
+      tags: [Billing]
+      operationId: createPaymentMethod
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider]
+              properties:
+                provider: { type: string, enum: [visa, mastercard, fpx] }
+                card_holder_name: { type: string }
+                card_number_tokenized: { type: string }
+                expiry_month: { type: integer, minimum: 1, maximum: 12 }
+                expiry_year: { type: integer }
+                cvc_tokenized: { type: string }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentMethod' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    deviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: DeviceToken
+
+  parameters:
+    FacilityId:
+      in: path
+      name: facility_id
+      required: true
+      schema: { type: string, format: uuid }
+    AppointmentId:
+      in: path
+      name: appointment_id
+      required: true
+      schema: { type: string, format: uuid }
+    DeviceId:
+      in: path
+      name: device_id
+      required: true
+      schema: { type: string, format: uuid }
+    Page:
+      in: query
+      name: page
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      in: query
+      name: page_size
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema: { type: string, minLength: 8, maxLength: 128 }
+
+  responses:
+    ErrorUnauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ErrorNotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ErrorValidation:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ErrorConflict:
+      description: Conflict
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ErrorGone:
+      description: Gone/expired
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    AuthSession:
+      type: object
+      required: [user_id, role, company_id, access_token, refresh_token]
+      properties:
+        user_id: { type: string, format: uuid }
+        role: { $ref: '#/components/schemas/UserRole' }
+        company_id: { type: string, format: uuid }
+        facility_id: { type: [string, 'null'], format: uuid }
+        access_token: { type: string }
+        refresh_token: { type: string }
+
+    UserProfile:
+      type: object
+      required: [user_id, company_id, role, email]
+      properties:
+        user_id: { type: string, format: uuid }
+        company_id: { type: string, format: uuid }
+        facility_id: { type: [string, 'null'], format: uuid }
+        role: { $ref: '#/components/schemas/UserRole' }
+        full_name: { type: [string, 'null'] }
+        email: { type: string, format: email }
+        phone: { type: [string, 'null'] }
+        oauth_provider: { type: string, enum: [email, google] }
+        gmail_connected_email: { type: [string, 'null'], format: email }
+
+    UserRole:
+      type: string
+      enum: [admin, manager]
+
+    DeviceRole:
+      type: string
+      enum: [gatehouse, loading_dock]
+
+    LoadType:
+      type: string
+      enum: [palletized, floor_loaded]
+
+    AppointmentStatus:
+      type: string
+      enum: [scheduled, yard_queue, assigned, unloading, completed, cancelled, no_show]
+
+    Appointment:
+      type: object
+      required: [id, company_id, facility_id, po_number, carrier_name, load_type, status, scheduled_start, scheduled_end]
+      properties:
+        id: { type: string, format: uuid }
+        company_id: { type: string, format: uuid }
+        facility_id: { type: string, format: uuid }
+        po_number: { type: string }
+        carrier_name: { type: string }
+        load_type: { $ref: '#/components/schemas/LoadType' }
+        status: { $ref: '#/components/schemas/AppointmentStatus' }
+        scheduled_start: { type: string, format: date-time }
+        scheduled_end: { type: string, format: date-time }
+        actual_start: { type: [string, 'null'], format: date-time }
+        actual_end: { type: [string, 'null'], format: date-time }
+        checked_in_at: { type: [string, 'null'], format: date-time }
+        door_id: { type: [string, 'null'], format: uuid }
+        gate_device_id: { type: [string, 'null'], format: uuid }
+        dock_device_id: { type: [string, 'null'], format: uuid }
+        is_overrun:
+          type: boolean
+          description: Derived server-side as now > scheduled_end and actual_end is null.
+
+    PagedAppointments:
+      type: object
+      required: [items, page, page_size, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Appointment' }
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+
+    YardQueueItem:
+      type: object
+      required: [appointment_id, po_number, checked_in_at, queue_position]
+      properties:
+        appointment_id: { type: string, format: uuid }
+        po_number: { type: string }
+        checked_in_at: { type: string, format: date-time }
+        queue_position: { type: integer, minimum: 1 }
+
+    DoorStatus:
+      type: object
+      required: [door_id, door_code, is_active, is_occupied]
+      properties:
+        door_id: { type: string, format: uuid }
+        door_code: { type: string }
+        is_active: { type: boolean }
+        is_occupied: { type: boolean }
+        current_appointment_id: { type: [string, 'null'], format: uuid }
+
+    Device:
+      type: object
+      required: [id, facility_id, device_name, role, status]
+      properties:
+        id: { type: string, format: uuid }
+        facility_id: { type: string, format: uuid }
+        door_id: { type: [string, 'null'], format: uuid }
+        device_name: { type: string }
+        device_model: { type: [string, 'null'] }
+        role: { $ref: '#/components/schemas/DeviceRole' }
+        status: { type: string, enum: [online, offline] }
+        last_heartbeat_at: { type: [string, 'null'], format: date-time }
+
+    PaymentMethod:
+      type: object
+      required: [id, company_id, provider, is_default]
+      properties:
+        id: { type: string, format: uuid }
+        company_id: { type: string, format: uuid }
+        provider: { type: string, enum: [visa, mastercard, fpx] }
+        card_holder_name: { type: [string, 'null'] }
+        card_last4: { type: [string, 'null'], pattern: '^[0-9]{4}$' }
+        card_expiry_month: { type: [integer, 'null'] }
+        card_expiry_year: { type: [integer, 'null'] }
+        is_default: { type: boolean }
+
+    FeatureFlags:
+      type: object
+      required: [ai_autopilot, auto_reshuffle, advanced_analytics]
+      properties:
+        ai_autopilot: { type: boolean }
+        auto_reshuffle: { type: boolean }
+        advanced_analytics: { type: boolean }
+
+    Error:
+      type: object
+      required: [code, message, request_id]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        request_id: { type: string }
+        details:
+          type: object
+          additionalProperties: true
