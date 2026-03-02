@@ -1,0 +1,9 @@
+# Ignore specific project files and directories
+The Concept.docx
+stitch_isomer/
+
+# Ignore all ZIP archives
+*.zip
+
+# Ignore all Microsoft Word temporary lock files
+~$*.docx
