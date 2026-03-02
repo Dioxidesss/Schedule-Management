@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Isomer - Autonomous Dock Scheduling</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#00e5ff",
+                        "primary-dark": "#00acc1",
+                        "background-light": "#f5f8f8", 
+                        "background-dark": "#0a1128", 
+                        "surface-dark": "#1B2A47", 
+                        "surface-darker": "#152036",
+                    },
+                    fontFamily: {
+                        display: ["Space Grotesk", "sans-serif"],
+                        body: ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        "2xl": "1rem",
+                        full: "9999px"
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        flow: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' },
+                        }
+                    },
+                    animation: {
+                        float: 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 7s ease-in-out infinite 1s',
+                        flow: 'flow 3s linear infinite',
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-dark text-slate-100 font-body overflow-x-hidden antialiased">
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-background-dark/80 backdrop-blur-sm p-4">
+<div class="relative w-full max-w-lg overflow-hidden rounded-2xl border border-primary/30 bg-surface-dark shadow-[0_0_50px_rgba(0,229,255,0.15)] ring-1 ring-white/10">
+<div class="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/20 blur-[60px]"></div>
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+<div class="relative p-8">
+<div class="mb-6 flex items-center justify-between">
+<div>
+<h2 class="font-display text-2xl font-bold text-white tracking-tight">Register This Device</h2>
+<p class="text-sm text-slate-400 mt-1">Configure kiosk identity for facility access.</p>
+</div>
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+<span class="material-symbols-outlined">link</span>
+</div>
+</div>
+<form class="space-y-5">
+<div class="space-y-1.5">
+<label class="block text-xs font-medium uppercase tracking-wider text-slate-400" for="device-name">Device Name / ID</label>
+<div class="relative">
+<input class="w-full rounded-lg border border-slate-600 bg-surface-darker/50 px-4 py-3 text-white placeholder-slate-500 focus:border-primary focus:bg-surface-darker focus:outline-none focus:ring-1 focus:ring-primary transition-all shadow-inner" id="device-name" name="device-name" placeholder="e.g. Gatehouse iPad" type="text" value="Gatehouse iPad"/>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 material-symbols-outlined text-lg">badge</span>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-medium uppercase tracking-wider text-primary" for="kiosk-role">Kiosk Role <span class="text-red-400">*</span></label>
+<div class="grid grid-cols-2 gap-4">
+<label class="relative flex cursor-pointer rounded-lg border border-slate-600 bg-surface-darker/50 p-4 shadow-sm focus:outline-none has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:checked]:bg-surface-darker transition-all hover:bg-surface-darker group">
+<input class="sr-only peer" name="kiosk-role" type="radio" value="gatehouse"/>
+<span class="flex flex-col">
+<span class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-xl group-hover:scale-110 transition-transform">security</span>
+<span class="block text-sm font-bold text-white">Gatehouse</span>
+</span>
+<span class="block text-xs text-slate-400">Check-in &amp; Verify</span>
+</span>
+<span class="absolute -right-px -top-px hidden h-4 w-4 rounded-bl-lg bg-primary text-background-dark peer-checked:block pointer-events-none">
+<svg class="h-4 w-4 p-0.5" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg>
+</span>
+</label>
+<label class="relative flex cursor-pointer rounded-lg border border-slate-600 bg-surface-darker/50 p-4 shadow-sm focus:outline-none has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:checked]:bg-surface-darker transition-all hover:bg-surface-darker group">
+<input class="sr-only peer" name="kiosk-role" type="radio" value="dock"/>
+<span class="flex flex-col">
+<span class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-green-400 text-xl group-hover:scale-110 transition-transform">forklift</span>
+<span class="block text-sm font-bold text-white">Loading Dock</span>
+</span>
+<span class="block text-xs text-slate-400">Ops &amp; Unload</span>
+</span>
+<span class="absolute -right-px -top-px hidden h-4 w-4 rounded-bl-lg bg-primary text-background-dark peer-checked:block pointer-events-none">
+<svg class="h-4 w-4 p-0.5" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" fill-rule="evenodd"></path></svg>
+</span>
+</label>
+</div>
+<p class="text-[10px] text-slate-500 mt-1.5 flex gap-1 items-center">
+<span class="material-symbols-outlined text-[12px]">info</span>
+                                Determines app routing and permissions
+                            </p>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-medium uppercase tracking-wider text-slate-400" for="device-model">Device Model</label>
+<div class="relative">
+<input class="w-full rounded-lg border border-slate-600 bg-surface-darker/50 px-4 py-3 text-white placeholder-slate-500 focus:border-primary focus:bg-surface-darker focus:outline-none focus:ring-1 focus:ring-primary transition-all shadow-inner" id="device-model" name="device-model" placeholder="e.g. Samsung Tab S8" readonly="" type="text" value="Samsung Tab S8"/>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 material-symbols-outlined text-lg">tablet_mac</span>
+</div>
+<p class="text-xs text-slate-500 text-right">Detected automatically</p>
+</div>
+<div class="space-y-1.5">
+<label class="block text-xs font-medium uppercase tracking-wider text-slate-400" for="location">Assigned Location</label>
+<div class="relative">
+<select class="w-full appearance-none rounded-lg border border-slate-600 bg-surface-darker/50 px-4 py-3 text-white focus:border-primary focus:bg-surface-darker focus:outline-none focus:ring-1 focus:ring-primary transition-all shadow-inner" id="location" name="location">
+<option disabled="" selected="" value="">Select a location...</option>
+<option value="dock-4">Dock 4 - Receiving</option>
+<option value="main-gate">Main Gate - Check In</option>
+<option value="warehouse-b">Warehouse B - Staging</option>
+<option value="security-post">Security Post 1</option>
+</select>
+<div class="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center text-slate-500">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+<div class="pt-4">
+<button class="group relative w-full overflow-hidden rounded-lg bg-primary py-4 text-base font-bold text-background-dark shadow-[0_0_20px_rgba(0,229,255,0.4)] transition-all hover:bg-white hover:shadow-[0_0_30px_rgba(0,229,255,0.6)] active:scale-[0.99]" type="button">
+<span class="relative z-10 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">lock_open</span>
+                                Lock Device to Facility
+                            </span>
+<div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-flow"></div>
+</button>
+<p class="mt-3 text-center text-xs text-slate-500">
+                            By locking, this device will enter kiosk mode and require an admin PIN to exit.
+                        </p>
+</div>
+</form>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="relative flex min-h-screen w-full flex-col overflow-x-hidden blur-sm pointer-events-none select-none">
+<header class="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-white/10 bg-background-dark/95 backdrop-blur-md px-6 py-4 lg:px-20">
+<div class="flex items-center gap-4 text-white">
+<div class="h-10 w-10 text-primary">
+<svg class="h-full w-full" fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<path d="M10 80 L50 50 L40 40 Z" fill="#0055AA"></path>
+<path d="M10 80 L40 40 L50 15 Z" fill="#0077EE"></path>
+<path d="M50 50 L90 20 L60 60 Z" fill="#0055AA"></path>
+<path d="M90 20 L60 60 L50 85 Z" fill="#0077EE"></path>
+<path d="M40 40 L60 60 L50 50 Z" fill="#00CCFF"></path>
+<path d="M10 80 L50 50 L50 15 Z" fill="url(#grad1)" opacity="0.8"></path>
+<path d="M90 20 L50 50 L50 85 Z" fill="url(#grad2)" opacity="0.8"></path>
+<defs>
+<linearGradient gradientUnits="userSpaceOnUse" id="grad1" x1="10" x2="50" y1="80" y2="15">
+<stop stop-color="#00E5FF"></stop>
+<stop offset="1" stop-color="#003366"></stop>
+</linearGradient>
+<linearGradient gradientUnits="userSpaceOnUse" id="grad2" x1="90" x2="50" y1="20" y2="85">
+<stop stop-color="#00E5FF"></stop>
+<stop offset="1" stop-color="#003366"></stop>
+</linearGradient>
+</defs>
+</svg>
+</div>
+<h2 class="text-white text-xl font-display font-bold leading-tight tracking-[-0.015em]" style="">Isomer</h2>
+</div>
+<button class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary text-background-dark px-6 py-2.5 text-sm font-display font-bold hover:bg-white transition-colors duration-200" style="">
+<span class="truncate" style="">Get Started Free</span>
+</button>
+</header>
+<main class="flex-grow">
+<section class="relative px-6 py-16 lg:px-20 lg:py-24 overflow-hidden">
+<div class="absolute top-0 right-0 w-1/2 h-full bg-primary/5 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4"></div>
+<div class="mx-auto max-w-7xl">
+<div class="grid gap-12 lg:grid-cols-2 lg:items-center">
+<div class="flex flex-col gap-6">
+<div class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 w-fit">
+<span class="block h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-xs font-medium text-primary uppercase tracking-wider" style="">Live Unload Docks Only</span>
+</div>
+<h1 class="font-display text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl" style=""><span class="text-primary" style="">The End of Static Scheduling.</span> <div>Move Freight, Not Spreadsheets.
+                            </div></h1>
+<p class="max-w-xl text-lg text-slate-400" style=""></p><blockquote class="" data-path-to-node="8" style=""><p class="" data-path-to-node="8,1" style="">Isomer is an <b data-index-in-node="29" data-path-to-node="8,1">Adaptive Dock Orchestration</b> platform. By translating unstructured vendor emails and real-time gate data into an optimized flow, Isomer eliminates the "Static Slot" fallacy—giving your facility a living, breathing schedule that adapts to the chaos of the road in real-time.</p></blockquote><p></p>
+<div class="flex flex-col sm:flex-row gap-4 pt-4">
+<button class="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-8 text-base font-bold text-background-dark hover:bg-white transition-all shadow-[0_0_20px_rgba(0,229,255,0.3)] hover:shadow-[0_0_30px_rgba(0,229,255,0.5)]" style="">Get Started Free</button>
+<button class="inline-flex h-12 items-center justify-center rounded-lg border border-slate-700 bg-transparent px-8 text-base font-bold text-white hover:bg-slate-800 transition-all" style="">
+                                    View Demo
+                                </button>
+</div>
+</div>
+<div class="relative w-full aspect-video lg:aspect-square lg:h-auto rounded-xl border border-slate-800 bg-surface-darker shadow-2xl overflow-hidden group">
+<div class="absolute inset-0 overflow-hidden opacity-20">
+<div class="absolute top-[20%] left-[-100%] w-[200%] h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-flow"></div>
+<div class="absolute top-[50%] left-[-100%] w-[200%] h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-flow" style="animation-delay: 1.5s"></div>
+<div class="absolute top-[80%] left-[-100%] w-[200%] h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-flow" style="animation-delay: 0.8s"></div>
+</div>
+<div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(68,68,68,.2)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] bg-[position:-100%_0,0_0] bg-no-repeat transition-[background-position_0s_ease] hover:bg-[position:200%_0,0_0] duration-[1500ms]"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-full h-full bg-[url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&amp;w=2670&amp;auto=format&amp;fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay" data-alt="Glowing isometric data visualization chart"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent"></div>
+<div class="absolute bottom-0 left-0 right-0 p-6 z-10">
+<div class="flex items-center justify-between mb-4">
+<div class="flex gap-2">
+<div class="h-2 w-24 bg-primary rounded-full"></div>
+<div class="h-2 w-12 bg-slate-600 rounded-full"></div>
+</div>
+<span class="text-primary font-mono text-sm flex items-center gap-1" style="">
+<span class="material-symbols-outlined text-sm animate-pulse" style="">bolt</span>
+    98% Efficient
+</span>
+</div>
+<div class="space-y-2">
+<div class="h-12 w-full bg-slate-800/80 backdrop-blur rounded border border-slate-700 flex items-center px-4 justify-between animate-float">
+<span class="text-xs text-slate-400" style="">Truck #8922</span>
+<div class="h-2 w-32 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+<span class="text-xs text-white font-mono" style="">On Time</span>
+</div>
+<div class="h-12 w-full bg-slate-800/80 backdrop-blur rounded border border-slate-700 flex items-center px-4 justify-between animate-float-delayed">
+<span class="text-xs text-slate-400" style="">Truck #1104</span>
+<div class="h-2 w-24 bg-primary rounded-full shadow-[0_0_10px_rgba(0,229,255,0.5)]"></div>
+<span class="text-xs text-white font-mono" style="">Rescheduled</span>
+</div>
+<div class="h-12 w-full bg-slate-800/80 backdrop-blur rounded border border-slate-700 flex items-center px-4 justify-between animate-float">
+<span class="text-xs text-slate-400" style="">Truck #4421</span>
+<div class="h-2 w-40 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+<span class="text-xs text-white font-mono" style="">Unloading</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-[#050914] px-6 py-20 lg:px-20">
+<div class="mx-auto max-w-7xl">
+<div class="mb-12">
+<h2 class="font-display text-3xl font-bold text-white mb-4" style="">The Shift to Autonomy</h2>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="max-w-2xl">
+<h3 class="text-4xl lg:text-5xl font-display font-black text-white mb-4" style="">Old Way vs. Isomer</h3>
+<p class="text-slate-400 text-lg" style="">Stop relying on static spreadsheets and manual emails. Switch to dynamic AI that adapts in real-time.</p>
+</div>
+<button class="text-primary font-bold border-b border-primary pb-1 hover:text-white hover:border-white transition-colors" style="">Compare Features →</button>
+</div>
+</div>
+<div class="grid gap-6 md:grid-cols-2">
+<div class="rounded-xl border border-red-900/30 bg-red-950/10 p-8 transition-colors hover:bg-red-950/20 group">
+<div class="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-red-500/10 text-red-500 group-hover:text-red-400 group-hover:bg-red-500/20">
+<span class="material-symbols-outlined text-3xl" style="">cancel</span>
+</div>
+<h4 class="mb-2 text-xl font-bold text-white font-display" style="">The Old Way: Chaos</h4>
+<p class="text-slate-400" style="">Manual spreadsheets, missed emails, and average 2 hours idle time per truck due to rigid scheduling.</p>
+<ul class="mt-6 space-y-3 text-sm text-slate-500">
+<li class="flex items-center gap-2" style=""><span class="material-symbols-outlined text-red-500 text-lg" style="">close</span> High Detention Fees</li>
+<li class="flex items-center gap-2" style=""><span class="material-symbols-outlined text-red-500 text-lg" style="">close</span> Phone Tag &amp; Emails</li>
+<li class="flex items-center gap-2" style=""><span class="material-symbols-outlined text-red-500 text-lg" style="">close</span> Reactive Problem Solving</li>
+</ul>
+</div>
+<div class="rounded-xl border border-primary/30 bg-primary/5 p-8 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[120px] text-primary animate-pulse" style="">auto_mode</span>
+</div>
+<div class="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-background-dark font-bold shadow-[0_0_15px_rgba(0,229,255,0.4)]">
+<span class="material-symbols-outlined text-3xl" style="">check_circle</span>
+</div>
+<h4 class="mb-2 text-xl font-bold text-white font-display" style="">Isomer: Precision</h4>
+<p class="text-primary/80" style="">Dynamic rescheduling, zero-touch coordination, and optimized turn times via AI prediction.</p>
+<ul class="mt-6 space-y-3 text-sm text-slate-300">
+<li class="flex items-center gap-2" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span> Zero Detention Fees</li>
+<li class="flex items-center gap-2" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span> Automated Negotiations</li>
+<li class="flex items-center gap-2" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span> Proactive Schedule Optimization</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-background-dark px-6 py-20 lg:px-20 relative">
+<div class="mx-auto max-w-7xl">
+<div class="mb-12 max-w-3xl">
+<h2 class="font-display text-4xl font-bold text-white mb-4" style="">How It Works</h2>
+<p class="text-slate-400 text-lg" style="">Our AI engine handles the entire lifecycle of a shipment appointment without human intervention.</p>
+</div>
+<div class="grid gap-8 md:grid-cols-4">
+<div class="group relative rounded-2xl border border-slate-800 bg-surface-dark p-6 hover:border-primary/50 transition-colors">
+<div class="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-800 text-white group-hover:bg-primary group-hover:text-background-dark transition-all duration-300">
+<span class="material-symbols-outlined text-2xl" style="">mark_email_read</span>
+</div>
+<h3 class="mb-3 text-lg font-bold text-white font-display" style="">1. Parse the Email</h3>
+<p class="text-slate-400 text-sm leading-relaxed" style="">Automatically extracts intent, time constraints, and load details from unstructured carrier emails.</p>
+</div>
+<div class="group relative rounded-2xl border border-slate-800 bg-surface-dark p-6 hover:border-primary/50 transition-colors">
+<div class="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-800 text-white group-hover:bg-primary group-hover:text-background-dark transition-all duration-300">
+<span class="material-symbols-outlined text-2xl" style="">query_builder</span>
+</div>
+<h3 class="mb-3 text-lg font-bold text-white font-display" style="">2. Predict the Time</h3>
+<p class="text-slate-400 text-sm leading-relaxed" style="">Uses historical warehouse data to predict exact unload durations based on SKU complexity and volume.</p>
+</div>
+<div class="group relative rounded-2xl border border-slate-800 bg-surface-dark p-6 hover:border-primary/50 transition-colors">
+<div class="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-800 text-white group-hover:bg-primary group-hover:text-background-dark transition-all duration-300">
+<span class="material-symbols-outlined text-2xl" style="">schedule</span>
+</div>
+<h3 class="mb-3 text-lg font-bold text-white font-display" style="">3. Task to Time Translation</h3>
+<p class="text-slate-400 text-sm leading-relaxed" style="">Replaces static 1-hour blocks with predictive ones (e.g., allocating exactly 85 mins for Vendor X).</p>
+</div>
+<div class="group relative rounded-2xl border border-slate-800 bg-surface-dark p-6 hover:border-primary/50 transition-colors">
+<div class="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-800 text-white group-hover:bg-primary group-hover:text-background-dark transition-all duration-300">
+<span class="material-symbols-outlined text-2xl" style="">alt_route</span>
+</div>
+<h3 class="mb-3 text-lg font-bold text-white font-display" style="">4. Dynamic Reshuffling</h3>
+<p class="text-slate-400 text-sm leading-relaxed" style="">Instantly reshuffles the dock schedule when trucks arrive early, late, or not at all to maximize throughput.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-surface-darker px-6 py-24 lg:px-20 border-y border-slate-800">
+<div class="mx-auto max-w-7xl">
+<div class="grid lg:grid-cols-2 gap-16 items-center">
+<div>
+<div class="inline-block rounded bg-primary/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary mb-6" style="">
+                                Return on Investment
+                            </div>
+<h2 class="font-display text-4xl lg:text-5xl font-black text-white mb-6" style="">Calculate Your Savings</h2>
+<p class="text-slate-300 text-lg mb-8" style="">
+                                Detention fees bleed your margins. With an average cost of <span class="text-white font-bold" style="">RM50-RM100 per hour</span> per truck, inefficiency is expensive. Isomer delivers 10x ROI in the first quarter.
+                            </p>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between mb-2">
+<label class="text-sm font-medium text-slate-400" style="">Weekly Truck Volume</label>
+<span class="text-white font-bold font-mono" style="">250 Trucks</span>
+</div>
+<div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[40%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<label class="text-sm font-medium text-slate-400" style="">Current Average Wait Time</label>
+<span class="text-white font-bold font-mono" style="">2.5 Hours</span>
+</div>
+<div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-red-500 w-[65%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="relative rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-8 shadow-2xl">
+<div class="absolute -top-4 -right-4 h-24 w-24 bg-primary/20 rounded-full blur-2xl"></div>
+<div class="text-center space-y-2 mb-8 border-b border-slate-700 pb-8">
+<p class="text-slate-400 text-sm font-medium uppercase tracking-widest" style="">Potential Monthly Savings</p>
+<div class="text-6xl lg:text-7xl font-display font-black text-white tracking-tighter" style="">
+                                    RM42,500
+                                </div>
+<p class="text-primary text-sm font-bold flex items-center justify-center gap-1" style="">
+<span class="material-symbols-outlined text-sm" style="">trending_up</span>
+                                    Based on RM75/hr detention fee avg
+                                </p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-background-dark rounded-lg p-4 text-center">
+<div class="text-slate-400 text-xs uppercase mb-1" style="">Annual Savings</div>
+<div class="text-white font-bold text-xl" style="">RM510,000</div>
+</div>
+<div class="bg-background-dark rounded-lg p-4 text-center border border-primary/20">
+<div class="text-primary text-xs uppercase mb-1" style="">Hours Saved</div>
+<div class="text-white font-bold text-xl" style="">540 hrs/mo</div>
+</div>
+</div>
+<button class="mt-8 w-full rounded-lg bg-white py-3 text-background-dark font-bold hover:bg-slate-200 transition-colors" style="">
+                                Get Full ROI Report
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-background-dark px-6 py-24 lg:px-20">
+<div class="mx-auto max-w-7xl">
+<div class="text-center max-w-3xl mx-auto mb-16">
+<h2 class="font-display text-4xl font-bold text-white mb-4" style="">Flexible Pricing</h2>
+<p class="text-lg text-slate-400" style="">
+                            Start for free. Scale with precision. Our variable throughput fees ensure you only pay for the exact volume of freight you successfully process.
+                        </p>
+</div>
+<div class="grid gap-8 lg:grid-cols-2 max-w-4xl mx-auto">
+<div class="flex flex-col rounded-2xl border border-slate-700 bg-surface-dark p-8 shadow-lg hover:border-slate-500 transition-all">
+<div class="mb-4">
+<h3 class="text-xl font-bold text-white font-display" style="">Freemium</h3>
+<p class="text-sm text-slate-400 mt-2" style="">For single warehouse operations</p>
+</div>
+<div class="mb-6 flex items-baseline gap-1">
+<span class="text-4xl font-bold text-white" style="">RM 0</span>
+<span class="text-slate-500" style="">/Forever</span>
+</div>
+<ul class="mb-8 flex-1 space-y-4 text-sm text-slate-300">
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span>Unlimited Trucks</li>
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span>Manual Scheduling</li>
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span>Unlimited Truck Scheduling</li>
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span>1 Manager Dashboard</li>
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span>Standard Delay Alerts</li>
+</ul>
+<button class="w-full rounded-lg border border-slate-600 bg-transparent py-3 text-sm font-bold text-white hover:bg-slate-800 hover:border-slate-500 transition-colors" style="">
+                                Start Free
+                            </button>
+</div>
+<div class="relative flex flex-col rounded-2xl border border-primary bg-surface-dark p-8 shadow-[0_0_30px_rgba(0,229,255,0.1)] overflow-hidden">
+<div class="absolute top-0 inset-x-0 h-10 bg-primary flex items-center justify-center">
+<p class="text-background-dark font-bold text-xs uppercase tracking-wider">Launch Offer: 1st Month Base Fee Waived</p>
+</div>
+<div class="mt-8 mb-4">
+<h3 class="text-xl font-bold text-white font-display" style="">Premium</h3>
+<p class="text-sm text-slate-400 mt-2" style="">For growing logistics hubs</p>
+</div>
+<div class="mb-6 flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold text-white" style="">RM 400</span>
+<span class="text-slate-500" style="">/month</span>
+</div>
+<div class="text-sm text-slate-400" style="">+ RM 1.00/Truck</div>
+</div>
+<ul class="mb-8 flex-1 space-y-4 text-white">
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span> Full AI Autopilot</li>
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span> Advanced Analytics</li>
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span> Auto-Reshuffling</li>
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span> 5 Kiosks</li>
+<li class="flex items-center gap-3" style=""><span class="material-symbols-outlined text-primary text-lg" style="">check</span>Voice-to-Text </li>
+</ul>
+<button class="w-full rounded-lg bg-primary py-3 text-sm font-bold text-background-dark hover:bg-white transition-colors" style="">
+                                Get Started
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<footer class="border-t border-slate-800 bg-background-dark px-6 py-12 lg:px-20">
+<div class="mx-auto max-w-7xl flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="flex items-center gap-2 text-white">
+<div class="size-6 text-primary">
+<svg class="h-full w-full" fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<path d="M10 80 L50 50 L40 40 Z" fill="#0055AA"></path>
+<path d="M10 80 L40 40 L50 15 Z" fill="#0077EE"></path>
+<path d="M50 50 L90 20 L60 60 Z" fill="#0055AA"></path>
+<path d="M90 20 L60 60 L50 85 Z" fill="#0077EE"></path>
+<path d="M40 40 L60 60 L50 50 Z" fill="#00CCFF"></path>
+<path d="M10 80 L50 50 L50 15 Z" fill="url(#gradF1)" opacity="0.8"></path>
+<path d="M90 20 L50 50 L50 85 Z" fill="url(#gradF2)" opacity="0.8"></path>
+<defs>
+<linearGradient gradientUnits="userSpaceOnUse" id="gradF1" x1="10" x2="50" y1="80" y2="15">
+<stop stop-color="#00E5FF"></stop>
+<stop offset="1" stop-color="#003366"></stop>
+</linearGradient>
+<linearGradient gradientUnits="userSpaceOnUse" id="gradF2" x1="90" x2="50" y1="20" y2="85">
+<stop stop-color="#00E5FF"></stop>
+<stop offset="1" stop-color="#003366"></stop>
+</linearGradient>
+</defs>
+</svg>
+</div>
+<span class="font-display font-bold text-lg" style="">Isomer</span>
+</div>
+<div class="text-slate-500 text-sm" style="">
+                        © 2024 Isomer Logistics AI. All rights reserved.
+                    </div>
+<div class="flex gap-6">
+<a class="text-slate-400 hover:text-white transition-colors" href="#" style="">Privacy</a>
+<a class="text-slate-400 hover:text-white transition-colors" href="#" style="">Terms</a>
+<a class="text-slate-400 hover:text-white transition-colors" href="#" style="">Twitter</a>
+</div>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

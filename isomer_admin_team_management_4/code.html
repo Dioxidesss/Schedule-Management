@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Isomer Admin: Register Device Modal</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00e5ff",
+              "background-light": "#f5f8f8",
+              "background-dark": "#0a1128", 
+              "surface-dark": "#131c38",
+              "surface-border": "#233358",
+              "text-secondary": "#9ab8bc",
+              "danger": "#ff4d4d",
+              "modal-card": "#1B2A47",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"],
+              "sans": ["Space Grotesk", "sans-serif"],
+              "mono": ["Space Mono", "monospace"], 
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            boxShadow: {
+               "cyan-glow": "0 0 20px rgba(0, 229, 255, 0.3)",
+               "text-glow": "0 0 10px rgba(0, 229, 255, 0.5)",
+            }
+          },
+        },
+      }
+    </script>
+<style type="text/tailwindcss">
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+  }
+}
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex flex-col overflow-x-hidden relative">
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+<div class="absolute inset-0 bg-background-dark/80 backdrop-blur-md"></div>
+<div class="relative w-full max-w-lg bg-modal-card rounded-xl border border-primary/30 shadow-cyan-glow flex flex-col overflow-hidden">
+<div class="px-8 py-6 border-b border-surface-border flex justify-between items-center bg-[#15203a]">
+<h3 class="text-white text-xl font-bold">Register New Device</h3>
+<button aria-label="Close modal" class="text-text-secondary hover:text-white hover:bg-surface-border transition-all duration-200 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 group">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">close</span>
+</button>
+</div>
+<div class="p-8 flex flex-col items-center gap-8">
+<div class="flex flex-col items-center gap-2 w-full">
+<p class="text-primary text-sm font-medium uppercase tracking-widest">6-digit Pairing Code</p>
+<div class="text-6xl md:text-7xl font-bold text-white tracking-widest font-mono text-glow">
+                    882-941
+                </div>
+</div>
+<div class="flex flex-col items-center gap-3">
+<div class="relative size-10">
+<div class="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+<div class="absolute inset-0 rounded-full border-t-2 border-primary animate-spin"></div>
+</div>
+<p class="text-text-secondary text-sm animate-pulse">... Waiting for connection...</p>
+</div>
+<div class="w-full bg-[#131e36] rounded-lg p-5 border border-surface-border">
+<h4 class="text-white font-bold text-sm mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">info</span>
+                    Pairing Instructions
+                </h4>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="size-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
+<div>
+<p class="text-white text-sm font-bold">Open Isomer App</p>
+<p class="text-text-secondary text-xs mt-0.5 leading-relaxed">Launch the Isomer Kiosk application on the tablet you wish to register.</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="size-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
+<div>
+<p class="text-white text-sm font-bold">Enter Code</p>
+<p class="text-text-secondary text-xs mt-0.5 leading-relaxed">Input the code shown above when prompted.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="px-8 py-5 border-t border-surface-border bg-[#15203a] flex justify-end gap-3">
+<button class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors">
+                Cancel
+            </button>
+<button class="px-6 py-2 bg-primary/20 text-primary/50 font-bold text-sm rounded-lg border border-primary/20 cursor-not-allowed flex items-center gap-2" disabled="">
+<span class="material-symbols-outlined text-[18px]">link_off</span>
+                Confirm Pairing
+            </button>
+</div>
+</div>
+</div>
+<div class="flex flex-col min-h-screen blur-[2px] pointer-events-none select-none">
+<nav class="w-full bg-background-dark border-b border-surface-border px-8 py-4 flex items-center justify-between shrink-0">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 shadow-lg shadow-primary/20" data-alt="Isomer AI Logo Abstract" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDJDQd70-zpZrtY3ePObTBTwJV9pbFUFyGlTrRGQkkd6g8YAoC4Sr5PQf8OCtxrXMJuZfoZXf3O77UhbKgo3vWCfxdzfqww7yqXv_4bH58FOIwo-YI6IOeXac6lMcaSPT3sOBcg9uGR5h2tP2nwiaqmBgsoRaca47e9zJ9kUQ8e87XKhfgrBBEuzrabI96BV8Bf-MQC59eqpuM3MuHaLEFS5mg0UJNbgtdCNB7jWOjNx_kD4lJMJVuVkfqH_8I7i0qeu7isKZBeXNk");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-lg font-bold leading-tight tracking-tight">Isomer</h1>
+<p class="text-slate-500 text-xs font-normal">Admin Console</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<a class="text-text-secondary hover:text-white text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-sm font-bold transition-colors" href="#">Team Management</a>
+<a class="text-text-secondary hover:text-white text-sm font-medium transition-colors" href="#">Reports</a>
+<div class="w-px h-6 bg-surface-border"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden md:block">
+<p class="text-white text-sm font-medium">Administrator</p>
+<p class="text-text-secondary text-xs">admin@isomer.ai</p>
+</div>
+<div class="size-9 rounded-full bg-surface-border flex items-center justify-center text-text-secondary">
+<span class="material-symbols-outlined">person</span>
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-1 w-full max-w-7xl mx-auto p-8">
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+<div class="flex flex-col gap-2 max-w-2xl">
+<h2 class="text-slate-900 dark:text-white text-3xl md:text-4xl font-bold tracking-tight">Team Management</h2>
+<p class="text-slate-500 dark:text-text-secondary text-base">
+                        Full control over facility managers, access permissions, and invites across your logistics network.
+                    </p>
+</div>
+<button class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-background-dark font-bold text-sm px-5 py-2.5 rounded-lg shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 shrink-0">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                    Invite Manager
+                </button>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border p-5 rounded-xl flex items-center gap-4 relative overflow-hidden group">
+<div class="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[80px] text-primary">badge</span>
+</div>
+<div class="size-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 z-10">
+<span class="material-symbols-outlined">badge</span>
+</div>
+<div class="z-10">
+<p class="text-slate-500 dark:text-text-secondary text-sm font-medium uppercase tracking-wider">Total Managers</p>
+<p class="text-slate-900 dark:text-white text-3xl font-bold mt-1">24</p>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border p-5 rounded-xl flex items-center gap-4 relative overflow-hidden group">
+<div class="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[80px] text-emerald-500">check_circle</span>
+</div>
+<div class="size-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0 z-10">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="z-10">
+<p class="text-slate-500 dark:text-text-secondary text-sm font-medium uppercase tracking-wider">Active Accounts</p>
+<p class="text-slate-900 dark:text-white text-3xl font-bold mt-1">21</p>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border p-5 rounded-xl flex items-center gap-4 relative overflow-hidden group">
+<div class="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[80px] text-amber-500">mark_email_unread</span>
+</div>
+<div class="size-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0 z-10">
+<span class="material-symbols-outlined">mark_email_unread</span>
+</div>
+<div class="z-10">
+<p class="text-slate-500 dark:text-text-secondary text-sm font-medium uppercase tracking-wider">Pending Invites</p>
+<p class="text-slate-900 dark:text-white text-3xl font-bold mt-1">3</p>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border rounded-xl overflow-hidden shadow-sm">
+<div class="p-4 border-b border-slate-200 dark:border-surface-border flex flex-wrap gap-3 items-center justify-between">
+<div class="flex gap-3 flex-1">
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-text-secondary text-[20px]">search</span>
+<input class="w-full bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-surface-border rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all" placeholder="Search by name, email or facility..." type="text"/>
+</div>
+<button class="px-4 py-2 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-surface-border rounded-lg text-slate-600 dark:text-text-secondary text-sm font-medium hover:text-slate-900 dark:hover:text-white flex items-center gap-2 hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                                Filters
+                            </button>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-text-secondary hover:text-white hover:bg-surface-border rounded-lg transition-colors" title="Export CSV">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="p-2 text-text-secondary hover:text-white hover:bg-surface-border rounded-lg transition-colors" title="Settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-[#0d1630] border-b border-slate-200 dark:border-surface-border">
+<th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-text-secondary uppercase tracking-wider w-1/4">Manager</th>
+<th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-text-secondary uppercase tracking-wider">Email</th>
+<th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-text-secondary uppercase tracking-wider">Assigned Facility</th>
+<th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-text-secondary uppercase tracking-wider">Status</th>
+<th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-text-secondary uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-surface-border">
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-3 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">
+                                            SC
+                                        </div>
+<span class="text-sm font-medium text-slate-900 dark:text-white">Sarah Chen</span>
+</div>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary font-mono text-xs">
+                                    sarah.c@isomer.ai
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                    West Coast Distribution Center
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 uppercase tracking-wide">
+<span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-right">
+<button class="text-xs font-bold text-danger/80 hover:text-danger hover:underline transition-colors uppercase tracking-wide">
+                                        Revoke Access
+                                    </button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-3 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 grayscale group-hover:grayscale-0 transition-all border border-surface-border" data-alt="User Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDDlbxkiNcqP7sUZWzR0HlqTuojJyVQMQRtP5tR9trQ-JI9Hk-vumNnENbPi7pjXZ5TeuGmFV9qTDeuta3kn48kkyxZ9iZFaqCCvKFljcEi56H0sYHnu8ZvgiOF9UDtW4_PxLoiN8Z7dX3nfi4YDTV5ssY8Nq8O5moBkxcp0ThZJ7Tp913eXFB6-rym_4mtJ9A9IPcagk7O9V6YTdV6OQvUwUpFuQ1KvAjpm_1u9BFEEaYMgsueuQjW7BtNT0Pnt8xze5uXXv7UlgM");'></div>
+<span class="text-sm font-medium text-slate-900 dark:text-white">Marcus Rodriguez</span>
+</div>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary font-mono text-xs">
+                                    marcus.r@isomer.ai
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                    Texas Logistics Hub
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 uppercase tracking-wide">
+<span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-right">
+<button class="text-xs font-bold text-danger/80 hover:text-danger hover:underline transition-colors uppercase tracking-wide">
+                                        Revoke Access
+                                    </button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-3 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs border border-indigo-500/20">
+                                            DK
+                                        </div>
+<span class="text-sm font-medium text-slate-900 dark:text-white">David Kim</span>
+</div>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary font-mono text-xs">
+                                    david.k@isomer.ai
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                    New Jersey Port Facility
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 uppercase tracking-wide">
+<span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-right">
+<button class="text-xs font-bold text-danger/80 hover:text-danger hover:underline transition-colors uppercase tracking-wide">
+                                        Revoke Access
+                                    </button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-3 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 grayscale group-hover:grayscale-0 transition-all border border-surface-border" data-alt="User Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAzP-d_kGjxtymbL3UIwCMaJvgJPlMMBToqwQDdt7QgZdoGagIUzspVyvRqypo1_bfJeEMzhc7BfndUYZVQwxEfs3rqhuzXwBxd1zycGrvLyUSPuXaZRdKs3Xa3QITInfSrLghN3l2EoQ8XGgDCPLL0ZY9b5rs5hihWvPnubACy0ZeGtVGkF7ZyWfkXb6Sg6TwAN07m0GA9oGjzoylwnIM-gbYzcTHjW38lZG1Ms8MvtWS3UmkLner1XpcmFPQRqikHS5eY7Mn4-bo");'></div>
+<span class="text-sm font-medium text-slate-900 dark:text-white">Elena Popov</span>
+</div>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary font-mono text-xs">
+                                    elena.p@isomer.ai
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                    Chicago Central Depot
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 uppercase tracking-wide">
+<span class="size-1.5 rounded-full bg-amber-500"></span>
+                                        Invited
+                                    </span>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-4">
+<button class="text-xs font-bold text-text-secondary hover:text-primary hover:underline transition-colors uppercase tracking-wide">
+                                            Resend
+                                        </button>
+<button class="text-xs font-bold text-danger/80 hover:text-danger hover:underline transition-colors uppercase tracking-wide">
+                                            Revoke
+                                        </button>
+</div>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-3 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-xs border border-orange-500/20">
+                                            JW
+                                        </div>
+<span class="text-sm font-medium text-slate-900 dark:text-white">James Wilson</span>
+</div>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary font-mono text-xs">
+                                    james.w@isomer.ai
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                    Miami Cold Storage
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 uppercase tracking-wide">
+<span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Active
+                                    </span>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-right">
+<button class="text-xs font-bold text-danger/80 hover:text-danger hover:underline transition-colors uppercase tracking-wide">
+                                        Revoke Access
+                                    </button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-3 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs border border-purple-500/20">
+                                            AL
+                                        </div>
+<span class="text-sm font-medium text-slate-900 dark:text-white">Anita Lewis</span>
+</div>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary font-mono text-xs">
+                                    anita.l@isomer.ai
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                    Seattle Fulfillment
+                                </td>
+<td class="px-6 py-3 whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 uppercase tracking-wide">
+<span class="size-1.5 rounded-full bg-amber-500"></span>
+                                        Invited
+                                    </span>
+</td>
+<td class="px-6 py-3 whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-4">
+<button class="text-xs font-bold text-text-secondary hover:text-primary hover:underline transition-colors uppercase tracking-wide">
+                                            Resend
+                                        </button>
+<button class="text-xs font-bold text-danger/80 hover:text-danger hover:underline transition-colors uppercase tracking-wide">
+                                            Revoke
+                                        </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-3 border-t border-slate-200 dark:border-surface-border flex items-center justify-between bg-slate-50/50 dark:bg-[#0d1630]">
+<p class="text-xs text-slate-500 dark:text-text-secondary">
+                        Showing <span class="font-medium text-slate-900 dark:text-white">1-6</span> of <span class="font-medium text-slate-900 dark:text-white">24</span> managers
+                    </p>
+<div class="flex gap-2">
+<button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border text-slate-500 dark:text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-border transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<button class="size-8 flex items-center justify-center rounded-lg bg-primary text-background-dark font-bold text-sm">
+                            1
+                        </button>
+<button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border text-slate-500 dark:text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-border transition-colors">
+                            2
+                        </button>
+<button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border text-slate-500 dark:text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-border transition-colors">
+                            3
+                        </button>
+<button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border text-slate-500 dark:text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-border transition-colors">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

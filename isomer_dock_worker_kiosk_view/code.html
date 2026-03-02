@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Isomer Dock Worker Kiosk (Refined)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0df2f2",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0a1128", // Custom dark navy from request
+                        "neon-cyan": "#0df2f2",
+                        "high-yellow": "#FFD700",
+                        "neon-green": "#39ff14",
+                        "royal-blue": "#4169e1",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>.glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col items-center justify-center text-slate-900 dark:text-slate-100 overflow-hidden relative">
+<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+<div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-royal-blue/10 rounded-full blur-[100px]"></div>
+</div>
+<div class="w-full max-w-md h-screen max-h-[900px] flex flex-col bg-[#0a1128] border-x border-white/10 shadow-2xl relative">
+<header class="flex items-center justify-between px-6 py-5 border-b border-white/10 bg-[#0d1633]">
+<div class="flex flex-col">
+<div class="flex items-center gap-2 text-primary mb-1">
+<span class="material-symbols-outlined text-lg">warehouse</span>
+<span class="text-xs font-bold tracking-widest uppercase opacity-80">Isomer Dock</span>
+</div>
+<h1 class="text-2xl font-bold tracking-tight text-white leading-none">
+                    DOOR 4 <span class="opacity-50 font-normal mx-2">|</span> <span class="text-slate-200 font-medium">Samsung</span>
+</h1>
+</div>
+<button class="flex items-center justify-center w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5 text-white">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+</button>
+</header>
+<main class="flex-1 flex flex-col px-6 py-8 gap-8 justify-center items-center relative">
+<div class="flex flex-col items-center justify-center w-full py-6 flex-1">
+<div class="flex flex-col items-center justify-center">
+<div class="font-mono font-bold text-7xl sm:text-8xl text-neon-cyan tracking-tighter tabular-nums drop-shadow-[0_0_15px_rgba(13,242,242,0.3)]">
+                        00:00:00
+                    </div>
+<div class="mt-8 flex items-center gap-2 px-5 py-3 rounded-full bg-white/5 border border-white/5">
+<span class="material-symbols-outlined text-neon-cyan text-sm">timer</span>
+<p class="text-slate-300 text-sm font-medium tracking-wide uppercase">Target: <span class="text-white font-bold">60 Mins</span></p>
+</div>
+<div class="w-full h-1.5 bg-white/10 rounded-full mt-12 overflow-hidden max-w-xs">
+<div class="h-full bg-neon-cyan w-0 animate-pulse"></div>
+</div>
+</div>
+</div>
+</main>
+<footer class="p-6 pt-2 bg-[#0a1128]">
+<div class="grid grid-cols-2 gap-4 h-20">
+<button class="relative overflow-hidden rounded-xl bg-neon-green hover:bg-[#4aff25] text-background-dark font-bold text-lg flex flex-col items-center justify-center shadow-lg shadow-green-500/10 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined mb-1 text-2xl">play_circle</span>
+<span class="leading-none">START</span>
+<span class="text-xs opacity-80 font-semibold mt-0.5">UNLOAD</span>
+</button>
+<button class="relative overflow-hidden rounded-xl bg-royal-blue hover:bg-[#527af2] text-white font-bold text-lg flex flex-col items-center justify-center shadow-lg shadow-blue-500/10 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined mb-1 text-2xl">check_circle</span>
+<span class="leading-none">COMPLETE</span>
+<span class="text-xs opacity-80 font-semibold mt-0.5">UNLOAD</span>
+</button>
+</div>
+<div class="mt-6 flex justify-between items-center text-xs text-slate-500 font-mono">
+<span>ID: 8829-XJ</span>
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    ONLINE
+                </span>
+</div>
+</footer>
+</div>
+</body></html>

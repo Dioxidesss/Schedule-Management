@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Isomer Manager: Device Kiosks with Roles</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#00e5ff",
+              "background-light": "#f5f8f8",
+              "background-dark": "#0a1128", 
+              "surface-dark": "#131c36",
+              "surface-border": "#233358",
+              "text-secondary": "#8da2b5",
+              "danger": "#ff4d4d",
+              "status-online": "#00ff9d",
+              "status-offline": "#ff3b3b",
+            },
+            fontFamily: {
+              "display": ["Space Grotesk", "sans-serif"],
+              "sans": ["Space Grotesk", "sans-serif"],
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex overflow-hidden">
+<main class="flex-1 w-full p-8 md:p-12 overflow-y-auto h-screen relative bg-background-light dark:bg-background-dark">
+<nav class="flex items-center justify-between mb-10 pb-6 border-b border-surface-border">
+<div class="flex items-center gap-12">
+<div class="flex items-center gap-4">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 shadow-lg shadow-primary/20" data-alt="Isomer AI Logo Abstract" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDJDQd70-zpZrtY3ePObTBTwJV9pbFUFyGlTrRGQkkd6g8YAoC4Sr5PQf8OCtxrXMJuZfoZXf3O77UhbKgo3vWCfxdzfqww7yqXv_4bH58FOIwo-YI6IOeXac6lMcaSPT3sOBcg9uGR5h2tP2nwiaqmBgsoRaca47e9zJ9kUQ8e87XKhfgrBBEuzrabI96BV8Bf-MQC59eqpuM3MuHaLEFS5mg0UJNbgtdCNB7jWOjNx_kD4lJMJVuVkfqH_8I7i0qeu7isKZBeXNk");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-xl font-bold leading-tight tracking-tight">Isomer</h1>
+<p class="text-text-secondary text-xs font-normal">Manager Console</p>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-text-secondary hover:text-white text-sm font-medium transition-colors" href="#">Dashboard</a>
+<a class="text-text-secondary hover:text-white text-sm font-medium transition-colors" href="#">Team Management</a>
+<a class="text-text-secondary hover:text-white text-sm font-medium transition-colors" href="#">Reports</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center rounded-full size-10 bg-surface-dark hover:bg-surface-border text-text-secondary hover:text-white transition-colors border border-surface-border">
+<span class="material-symbols-outlined text-[24px]">account_circle</span>
+</button>
+</div>
+</nav>
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+<div class="flex flex-col gap-2 max-w-2xl">
+<h2 class="text-slate-900 dark:text-white text-3xl md:text-4xl font-bold tracking-tight">Device Kiosks</h2>
+<p class="text-slate-500 dark:text-text-secondary text-base">
+                    Monitor the status and connectivity of facility kiosks.
+                </p>
+</div>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border p-5 rounded-xl flex items-center gap-4">
+<div class="size-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">devices</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-text-secondary text-sm">Total Devices</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold">42</p>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border p-5 rounded-xl flex items-center gap-4">
+<div class="size-12 rounded-full bg-status-online/10 flex items-center justify-center text-status-online">
+<span class="material-symbols-outlined">wifi</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-text-secondary text-sm">Online Now</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold">38</p>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border p-5 rounded-xl flex items-center gap-4">
+<div class="size-12 rounded-full bg-status-offline/10 flex items-center justify-center text-status-offline">
+<span class="material-symbols-outlined">wifi_off</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-text-secondary text-sm">Offline</p>
+<p class="text-slate-900 dark:text-white text-2xl font-bold">4</p>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-surface-border rounded-xl overflow-hidden shadow-sm">
+<div class="p-4 border-b border-slate-200 dark:border-surface-border flex gap-3">
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-text-secondary text-[20px]">search</span>
+<input class="w-full bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-surface-border rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent" placeholder="Search device ID or location..." type="text"/>
+</div>
+<button class="px-4 py-2 bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-surface-border rounded-lg text-slate-600 dark:text-text-secondary text-sm font-medium hover:text-slate-900 dark:hover:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                    Status: All
+                </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-[#0f172a] border-b border-slate-200 dark:border-surface-border">
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-text-secondary uppercase tracking-wider">Device ID / Model</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-text-secondary uppercase tracking-wider">Location</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-text-secondary uppercase tracking-wider">Role</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-text-secondary uppercase tracking-wider">Last Heartbeat</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-text-secondary uppercase tracking-wider text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-surface-border">
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded bg-surface-dark border border-surface-border flex items-center justify-center text-text-secondary shrink-0">
+<span class="material-symbols-outlined">tablet_mac</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white font-mono">K-WC-001</span>
+<span class="text-xs text-slate-500 dark:text-text-secondary">iPad Pro 12.9" (Gen 5)</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                West Coast DC - Gate A
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                    Gatekeeper
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                2 mins ago
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-status-online border border-emerald-200 dark:border-emerald-500/20">
+<span class="size-1.5 rounded-full bg-emerald-500 dark:bg-status-online"></span>
+                                    Online
+                                </span>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded bg-surface-dark border border-surface-border flex items-center justify-center text-text-secondary shrink-0">
+<span class="material-symbols-outlined">tablet_mac</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white font-mono">K-WC-004</span>
+<span class="text-xs text-slate-500 dark:text-text-secondary">Galaxy Tab S8</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                West Coast DC - Break Room
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                    Loading Dock
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                5 mins ago
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-status-online border border-emerald-200 dark:border-emerald-500/20">
+<span class="size-1.5 rounded-full bg-emerald-500 dark:bg-status-online"></span>
+                                    Online
+                                </span>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded bg-surface-dark border border-surface-border flex items-center justify-center text-text-secondary shrink-0">
+<span class="material-symbols-outlined">desktop_windows</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white font-mono">K-TX-102</span>
+<span class="text-xs text-slate-500 dark:text-text-secondary">Elo Touch 22"</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                Texas Hub - Dock 3
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                    Loading Dock
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-danger font-medium">
+                                3 hours ago
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-status-offline border border-red-200 dark:border-red-500/20">
+<span class="size-1.5 rounded-full bg-red-500 dark:bg-status-offline"></span>
+                                    Offline
+                                </span>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded bg-surface-dark border border-surface-border flex items-center justify-center text-text-secondary shrink-0">
+<span class="material-symbols-outlined">tablet_mac</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white font-mono">K-NJ-201</span>
+<span class="text-xs text-slate-500 dark:text-text-secondary">iPad Air (Gen 4)</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                NJ Port - Security Check
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                    Gatekeeper
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                1 min ago
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-status-online border border-emerald-200 dark:border-emerald-500/20">
+<span class="size-1.5 rounded-full bg-emerald-500 dark:bg-status-online"></span>
+                                    Online
+                                </span>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4 whitespace-nowrap">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded bg-surface-dark border border-surface-border flex items-center justify-center text-text-secondary shrink-0">
+<span class="material-symbols-outlined">desktop_windows</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white font-mono">K-CH-305</span>
+<span class="text-xs text-slate-500 dark:text-text-secondary">Dell OptiPlex Micro</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                Chicago Depot - Receiving
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                    Loading Dock
+                                </span>
+</td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-text-secondary">
+                                12 mins ago
+                            </td>
+<td class="px-6 py-4 whitespace-nowrap text-right">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-status-online border border-emerald-200 dark:border-emerald-500/20">
+<span class="size-1.5 rounded-full bg-emerald-500 dark:bg-status-online"></span>
+                                    Online
+                                </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 border-t border-slate-200 dark:border-surface-border flex items-center justify-between">
+<p class="text-sm text-slate-500 dark:text-text-secondary">
+                    Showing <span class="font-medium text-slate-900 dark:text-white">1-5</span> of <span class="font-medium text-slate-900 dark:text-white">42</span> devices
+                </p>
+<div class="flex gap-2">
+<button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border text-slate-500 dark:text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-border transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<button class="size-8 flex items-center justify-center rounded-lg bg-primary text-background-dark font-bold text-sm">
+                        1
+                    </button>
+<button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border text-slate-500 dark:text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-border transition-colors">
+                        2
+                    </button>
+<button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border text-slate-500 dark:text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-border transition-colors">
+                        3
+                    </button>
+<button class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-surface-border text-slate-500 dark:text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-border transition-colors">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
