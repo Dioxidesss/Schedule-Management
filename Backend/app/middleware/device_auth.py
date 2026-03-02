@@ -62,15 +62,21 @@ async def get_device(
 
     device_id = payload.get("device_id")
     facility_id = payload.get("facility_id")
+    # role from JWT is only used for the malformed-token guard below.
+    # The authoritative role is read from the DB row (line 88) to prevent
+    # stale JWT claims from bypassing a role change.
     role = payload.get("role")
 
     if not device_id or not facility_id or not role:
         raise api_error(ErrorCode.DEVICE_TOKEN_INVALID, 401, "Device token malformed.")
 
-    # Verify the token is still live in the DB (unpair nulls device_token)
+    # Verify the token is still live in the DB (unpair nulls device_token).
+    # Note: device.status is not checked here — 'offline' is cosmetic/display-only.
+    # A device in 'offline' state may still authenticate; the dashboard uses
+    # last_heartbeat_at age to determine liveness, not this field.
     result = (
         service_client.table("devices")
-        .select("id, facility_id, role, door_id, device_token, status")
+        .select("id, facility_id, role, door_id, device_token")
         .eq("id", device_id)
         .maybe_single()
         .execute()

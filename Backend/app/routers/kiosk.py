@@ -11,7 +11,6 @@ from datetime import datetime
 from fastapi import APIRouter, status
 from pydantic import BaseModel
 
-from app.core.db import enrich_appointment
 from app.core.errors import ErrorCode, api_error
 from app.core.state_machine import validate_appointment_transition, validate_completed_invariant
 from app.core.supabase import service_client
@@ -126,9 +125,16 @@ async def gatehouse_check_in(body: CheckInRequest, device: GatehouseDevice):
     free_door_id = _find_free_door(str(body.facility_id))
 
     if free_door_id:
+        # scheduled or yard_queue → assigned
         validate_appointment_transition(current_status, "assigned")
         new_status = "assigned"
+    elif current_status == "yard_queue":
+        # Re-scan: truck already queued, no door still free.
+        # Do not attempt yard_queue → yard_queue (illegal transition).
+        # Just refresh checked_in_at and gate_device_id; status unchanged.
+        new_status = "yard_queue"
     else:
+        # scheduled → yard_queue
         validate_appointment_transition(current_status, "yard_queue")
         new_status = "yard_queue"
 

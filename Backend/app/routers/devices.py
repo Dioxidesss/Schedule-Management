@@ -84,11 +84,29 @@ async def create_pairing_code(
     code = f"{secrets.randbelow(1_000_000):06d}"
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=PAIRING_CODE_TTL_MINUTES)).isoformat()
 
+    # Pre-create device row so role + door_id are stored before kiosk pairs.
+    # The pair endpoint reads back this device row and issues the token.
+    device_insert: dict = {
+        "facility_id": str(facility_id),
+        "device_name": body.device_name,
+        "role": body.role,
+        "is_locked_to_facility": body.is_locked_to_facility,
+        "status": "offline",
+    }
+    if body.door_id:
+        device_insert["door_id"] = str(body.door_id)
+
+    dev_result = service_client.table("devices").insert(device_insert).execute()
+    if not dev_result.data:
+        raise api_error(ErrorCode.INTERNAL_ERROR, 500, "Failed to pre-create device record.")
+    new_device_id = dev_result.data[0]["id"]
+
     result = (
         service_client.table("device_pairing_codes")
         .insert(
             {
                 "facility_id": str(facility_id),
+                "device_id": new_device_id,
                 "code": code,
                 "expires_at": expires_at,
                 "created_by_user_id": str(current_user.id),
@@ -282,7 +300,7 @@ async def unpair_device(
     )
     dev = dev_result.data
     if not dev:
-        raise api_error(ErrorCode.INTERNAL_ERROR, 404, "Device not found.")
+        raise api_error(ErrorCode.INTERNAL_ERROR, 404, "Device not found.", {"device_id": str(device_id)})
 
     # Verify admin_pin if hash is stored
     if dev.get("admin_pin_hash"):
