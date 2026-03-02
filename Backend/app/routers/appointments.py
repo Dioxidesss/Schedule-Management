@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from app.core.ai import estimate_scheduled_end
 from app.core.db import enrich_appointment
 from app.core.errors import ErrorCode, api_error
+from app.core.realtime import build_envelope, publish
 from app.core.state_machine import (
     validate_appointment_transition,
     validate_completed_invariant,
@@ -185,6 +186,30 @@ async def create_appointment(
     if idempotency_key:
         _idempotency_cache[idempotency_key] = response
 
+    # Realtime: appointment_created on dashboard
+    new_appt = result.data[0]
+    await publish(
+        f"facility:{facility_id}:dashboard",
+        "appointment_created",
+        build_envelope(
+            "appointment_created",
+            {
+                "appointment": {
+                    "id": new_appt["id"],
+                    "po_number": body.po_number,
+                    "status": "scheduled",
+                    "scheduled_start": scheduled_start_str,
+                    "scheduled_end": scheduled_end_str,
+                    "door_id": None,
+                }
+            },
+            facility_id=str(facility_id),
+            company_id=str(current_user.company_id),
+            actor_kind="user",
+            actor_id=str(current_user.id),
+        ),
+    )
+
     return response
 
 
@@ -280,4 +305,20 @@ async def update_appointment(
     if not result.data:
         raise api_error(ErrorCode.INTERNAL_ERROR, 500, "Unexpected server-side failure.")
 
-    return enrich_appointment(result.data[0])
+    updated = result.data[0]
+
+    # Realtime: appointment_updated on dashboard
+    await publish(
+        f"facility:{updated['facility_id']}:dashboard",
+        "appointment_updated",
+        build_envelope(
+            "appointment_updated",
+            {"appointment_id": str(appointment_id), "changes": updates},
+            facility_id=updated["facility_id"],
+            company_id=updated.get("company_id", ""),
+            actor_kind="user",
+            actor_id=str(current_user.id),
+        ),
+    )
+
+    return enrich_appointment(updated)

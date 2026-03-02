@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 from app.core.errors import ErrorCode, api_error
+from app.core.realtime import build_envelope, publish
 from app.core.supabase import service_client
 from app.middleware.auth import CurrentUser, get_current_user
 from app.middleware.device_auth import DeviceAuth, get_device
@@ -232,6 +233,24 @@ async def pair_device(body: PairDeviceRequest):
         {"used_at": now.isoformat(), "device_id": str(device_id)}
     ).eq("id", code_row["id"]).execute()
 
+    # Realtime: pairing_confirmed on device channel
+    await publish(
+        f"device:{device_id}",
+        "pairing_confirmed",
+        build_envelope(
+            "pairing_confirmed",
+            {
+                "device_id": str(device_id),
+                "facility_id": str(facility_id),
+                "role": role,
+                "door_id": str(door_id) if door_id else None,
+            },
+            facility_id=str(facility_id),
+            actor_kind="worker",
+            actor_id="api-server",
+        ),
+    )
+
     return {
         "device_id": str(device_id),
         "facility_id": str(facility_id),
@@ -268,6 +287,24 @@ async def device_heartbeat(
             "status": body.status if body.status in ("online", "offline") else "online",
         }
     ).eq("id", str(device_id)).execute()
+
+    # Realtime: device_status_changed on facility dashboard
+    effective_status = body.status if body.status in ("online", "offline") else "online"
+    await publish(
+        f"facility:{device.facility_id}:dashboard",
+        "device_status_changed",
+        build_envelope(
+            "device_status_changed",
+            {
+                "device_id": str(device_id),
+                "status": effective_status,
+                "last_heartbeat_at": body.observed_at.isoformat(),
+            },
+            facility_id=str(device.facility_id),
+            actor_kind="device",
+            actor_id=str(device_id),
+        ),
+    )
 
     return {"success": True}
 
@@ -311,5 +348,18 @@ async def unpair_device(
     service_client.table("devices").update(
         {"device_token": None, "status": "offline"}
     ).eq("id", str(device_id)).execute()
+
+    # Realtime: force_signout on device channel — tablet clears itself
+    await publish(
+        f"device:{device_id}",
+        "force_signout",
+        build_envelope(
+            "force_signout",
+            {"reason": "unpaired"},
+            facility_id=dev.get("facility_id"),
+            actor_kind="user",
+            actor_id=str(current_user.id),
+        ),
+    )
 
     return {"success": True}
