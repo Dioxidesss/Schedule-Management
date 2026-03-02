@@ -13,6 +13,8 @@ from app.core.config import settings
 from app.core.errors import APIError, ErrorCode
 from app.routers.auth import router as auth_router
 from app.routers.profile import router as profile_router
+from app.routers.facilities import router as facilities_router
+from app.routers.appointments import router as appointments_router
 
 
 @asynccontextmanager
@@ -75,6 +77,8 @@ async def generic_error_handler(request: Request, exc: Exception):
 # ---------------------------------------------------------------------------
 app.include_router(auth_router)
 app.include_router(profile_router)
+app.include_router(facilities_router)
+app.include_router(appointments_router)
 
 
 # ---------------------------------------------------------------------------
