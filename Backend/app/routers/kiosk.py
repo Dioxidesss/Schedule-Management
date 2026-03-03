@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from app.core.errors import ErrorCode, api_error
 from app.core.realtime import build_envelope, get_queue_snapshot, publish
+from app.core.routing import assign_next_from_queue
 from app.core.state_machine import validate_appointment_transition, validate_completed_invariant
 from app.core.supabase import service_client
 from app.middleware.device_auth import DockDevice, GatehouseDevice
@@ -397,98 +398,17 @@ async def complete_unload(body: CompleteUnloadRequest, device: DockDevice):
         )
 
     # -----------------------------------------------------------------------
-    # Auto-routing: assign oldest yard_queue truck to freed door
+    # Auto-routing: assign oldest yard_queue truck to the freed door
+    # Uses the shared fluid routing engine (Phase 9) which also broadcasts
+    # door_assignment_changed to the specific dock device channel.
     # -----------------------------------------------------------------------
-    auto_routed_id: str | None = None
     if freed_door_id:
-        next_res = (
-            service_client.table("appointments")
-            .select("id")
-            .eq("facility_id", facility_id_str)
-            .eq("status", "yard_queue")
-            .order("checked_in_at", desc=False)
-            .limit(1)
-            .execute()
-        )
-        next_appt = (next_res.data or [None])[0]
-        if next_appt:
-            try:
-                validate_appointment_transition("yard_queue", "assigned")
-                service_client.table("appointments").update(
-                    {"status": "assigned", "door_id": freed_door_id}
-                ).eq("id", next_appt["id"]).execute()
-                auto_routed_id = next_appt["id"]
-            except Exception:
-                pass  # Non-fatal; truck stays queued
-
-    # Realtime — auto-routing events
-    if auto_routed_id:
-        await publish(
-            f"facility:{facility_id_str}:dashboard",
-            "appointment_updated",
-            build_envelope(
-                "appointment_updated",
-                {"appointment_id": auto_routed_id, "changes": {"status": "assigned", "door_id": freed_door_id}},
-                facility_id=facility_id_str,
-                company_id=company_id_str,
-                actor_kind="worker",
-                actor_id="routing-engine",
-            ),
-        )
-        await publish(
-            f"facility:{facility_id_str}:queue",
-            "queue_assigned_to_door",
-            build_envelope(
-                "queue_assigned_to_door",
-                {"appointment_id": auto_routed_id, "door_id": freed_door_id},
-                facility_id=facility_id_str,
-                company_id=company_id_str,
-                actor_kind="worker",
-                actor_id="routing-engine",
-            ),
-        )
-        await publish(
-            f"facility:{facility_id_str}:queue",
-            "queue_removed",
-            build_envelope(
-                "queue_removed",
-                {"appointment_id": auto_routed_id, "reason": "assigned"},
-                facility_id=facility_id_str,
-                company_id=company_id_str,
-                actor_kind="worker",
-                actor_id="routing-engine",
-            ),
-        )
-        await publish(
-            f"facility:{facility_id_str}:doors",
-            "door_assignment_changed",
-            build_envelope(
-                "door_assignment_changed",
-                {
-                    "door_id": freed_door_id,
-                    "from_appointment_id": str(body.appointment_id),
-                    "to_appointment_id": auto_routed_id,
-                },
-                facility_id=facility_id_str,
-                company_id=company_id_str,
-                actor_kind="worker",
-                actor_id="routing-engine",
-            ),
-        )
-
-    # Updated queue snapshot for dashboard
-    queue_snap = await get_queue_snapshot(facility_id_str)
-    await publish(
-        f"facility:{facility_id_str}:dashboard",
-        "yard_queue_updated",
-        build_envelope(
-            "yard_queue_updated",
-            {"queue": queue_snap},
+        await assign_next_from_queue(
             facility_id=facility_id_str,
             company_id=company_id_str,
-            actor_kind="worker",
+            freed_door_id=freed_door_id,
             actor_id="routing-engine",
-        ),
-    )
+        )
 
     return {"appointment_id": str(body.appointment_id), "status": "completed"}
+

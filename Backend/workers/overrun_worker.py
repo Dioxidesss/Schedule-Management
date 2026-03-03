@@ -25,8 +25,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from app.core.realtime import build_envelope, publish  # noqa: E402
-from app.core.supabase import service_client            # noqa: E402
+from app.core.realtime import build_envelope, publish          # noqa: E402
+from app.core.routing import assign_next_from_queue            # noqa: E402
+from app.core.supabase import service_client                   # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO,
@@ -161,7 +162,34 @@ async def run_overrun_check(dry_run: bool = False) -> int:
         await asyncio.gather(*tasks)
 
     log.info("Overrun check complete. Published events for %d appointment(s).", len(appointments))
+
+    # ── Phase 9 feed: attempt fluid routing after overrun detection ────────
+    # If an overrunning appointment is tying up a door, a manager may have
+    # intervened manually and freed it. Try to route any free doors to waiting
+    # yard_queue trucks across all affected facilities.
+    if not dry_run:
+        affected = {(a["facility_id"], a["company_id"]) for a in appointments}
+        routing_tasks = [
+            assign_next_from_queue(
+                facility_id=fid,
+                company_id=cid,
+                freed_door_id=None,   # discover any free door
+                actor_id="overrun_detector",
+            )
+            for fid, cid in affected
+        ]
+        if routing_tasks:
+            results = await asyncio.gather(*routing_tasks, return_exceptions=True)
+            for (fid, _), res in zip(affected, results):
+                if isinstance(res, Exception):
+                    log.error("Routing failed for facility %s: %s", fid, res)
+                elif res:
+                    log.info("Routing: assigned appt=%s from overrun trigger (facility=%s)", res, fid)
+    else:
+        log.info("[dry_run] Would try routing for %d facility(ies).", len({a["facility_id"] for a in appointments}))
+
     return len(appointments)
+
 
 
 # ---------------------------------------------------------------------------
