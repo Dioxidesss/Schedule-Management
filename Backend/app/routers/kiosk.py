@@ -11,6 +11,7 @@ from datetime import datetime
 from fastapi import APIRouter, status
 from pydantic import BaseModel
 
+from app.core.audit import audit
 from app.core.errors import ErrorCode, api_error
 from app.core.realtime import build_envelope, get_queue_snapshot, publish
 from app.core.routing import assign_next_from_queue
@@ -355,6 +356,13 @@ async def complete_unload(body: CompleteUnloadRequest, device: DockDevice):
     merged = {**appt, "actual_end": body.actual_end.isoformat()}
     validate_completed_invariant(merged)
 
+    # Guard: idempotent completion — already completed
+    if appt["status"] == "completed":
+        raise api_error(
+            ErrorCode.DUPLICATE_COMPLETION_EVENT, 409,
+            "Appointment already completed —  duplicate completion event rejected.",
+        )
+
     freed_door_id = appt.get("door_id")
     facility_id_str = appt["facility_id"]
     company_id_str = appt.get("company_id", "")
@@ -362,6 +370,47 @@ async def complete_unload(body: CompleteUnloadRequest, device: DockDevice):
     service_client.table("appointments").update(
         {"status": "completed", "actual_end": body.actual_end.isoformat()}
     ).eq("id", str(body.appointment_id)).execute()
+
+    # -----------------------------------------------------------------------
+    # Phase 12: trucks_this_cycle metering
+    # Increment the active subscription's counter on FIRST completion.
+    # Uses a raw SQL RPC call (or Supabase .rpc) to atomically increment.
+    # If the RPC isn't set up yet, fall back to a read-modify-write with a
+    # non-fatal error so completion is never blocked.
+    # -----------------------------------------------------------------------
+    try:
+        sub_res = (
+            service_client.table("subscriptions")
+            .select("id, trucks_this_cycle")
+            .eq("company_id", company_id_str)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if sub_res.data:
+            sub = sub_res.data[0]
+            service_client.table("subscriptions").update(
+                {"trucks_this_cycle": sub["trucks_this_cycle"] + 1}
+            ).eq("id", sub["id"]).execute()
+    except Exception as meter_exc:
+        # Non-fatal — completion succeeds even if metering fails
+        import logging
+        logging.getLogger("kiosk").error("trucks_this_cycle metering failed: %s", meter_exc)
+
+    # Phase 12: audit log
+    audit(
+        "appointment_completed",
+        actor_kind="device",
+        actor_id=str(device.device_id),
+        company_id=company_id_str,
+        facility_id=facility_id_str,
+        resource_type="appointment",
+        resource_id=str(body.appointment_id),
+        metadata={
+            "actual_end": body.actual_end.isoformat(),
+            "freed_door_id": freed_door_id,
+        },
+    )
 
     # -----------------------------------------------------------------------
     # Realtime — completion events

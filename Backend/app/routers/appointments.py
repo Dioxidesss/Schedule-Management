@@ -13,8 +13,10 @@ from fastapi import APIRouter, Depends, Header, Request, status
 from pydantic import BaseModel
 
 from app.core.ai import estimate_scheduled_end
+from app.core.audit import audit
 from app.core.db import enrich_appointment, get_plan_feature_flags
 from app.core.errors import ErrorCode, api_error
+from app.core.idempotency import check_idempotency, store_idempotency
 from app.core.realtime import build_envelope, publish
 from app.core.state_machine import (
     validate_appointment_transition,
@@ -30,10 +32,12 @@ router = APIRouter(tags=["Appointments"])
 ManagerOrAdmin = Annotated[CurrentUser, Depends(require_manager_or_admin)]
 
 # ---------------------------------------------------------------------------
-# In-process idempotency cache (Phase 12 will replace with DB-backed store)
-# key: Idempotency-Key header value → cached response dict
+# DB-backed idempotency (Phase 12) — replaces in-process dict
+# The _idempotency_cache below is kept as a fast L1 within the same process
+# instance; DB is the L2 for cross-instance replay protection.
 # ---------------------------------------------------------------------------
 _idempotency_cache: dict[str, dict] = {}
+
 
 
 # ---------------------------------------------------------------------------
@@ -121,9 +125,14 @@ async def create_appointment(
     if body.load_type not in ("palletized", "floor_loaded"):
         raise api_error(ErrorCode.INVALID_TIME_WINDOW, 422, f"Invalid load_type: {body.load_type}")
 
-    # Idempotency check
-    if idempotency_key and idempotency_key in _idempotency_cache:
-        return _idempotency_cache[idempotency_key]
+    # Idempotency check — L1: in-process, L2: DB (Phase 12)
+    if idempotency_key:
+        if idempotency_key in _idempotency_cache:
+            return _idempotency_cache[idempotency_key]
+        db_cached = check_idempotency(idempotency_key)
+        if db_cached is not None:
+            _idempotency_cache[idempotency_key] = db_cached
+            return db_cached
 
     # Resolve / estimate scheduled_end — gated on ai_autopilot feature flag
     # ai_logic.md: SCHEDULE END PREDICTION is premium-only
@@ -191,9 +200,22 @@ async def create_appointment(
         "provisional_door_id": None,
     }
 
-    # Cache for idempotency
+    # Store idempotency — L1 + L2 (Phase 12)
     if idempotency_key:
         _idempotency_cache[idempotency_key] = response
+        store_idempotency(idempotency_key, response)
+
+    # Audit: appointment_created (Phase 12)
+    audit(
+        "appointment_created",
+        actor_kind="user",
+        actor_id=str(current_user.id),
+        company_id=str(current_user.company_id),
+        facility_id=str(facility_id),
+        resource_type="appointment",
+        resource_id=result.data[0]["id"],
+        metadata={"po_number": body.po_number, "carrier_name": body.carrier_name},
+    )
 
     # Realtime: appointment_created on dashboard
     new_appt = result.data[0]
