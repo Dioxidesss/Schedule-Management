@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .gantt-grid {
+      background-size: 80px 100%;
+      background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px);
+  }
+  
+  .animate-fadeIn {
+      animation: fadeIn 0.2s ease-out;
+  }
+  
+  @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+  }
+}
