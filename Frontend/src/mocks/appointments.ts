@@ -1,0 +1,83 @@
+import type { Appointment } from '../types/appointment';
+
+export const MOCK_APPOINTMENTS: Appointment[] = [
+    {
+        id: 'appt-001',
+        po_number: 'PO-8821',
+        carrier_name: 'Global Logistics',
+        scheduled_start: '2026-03-03T08:00:00',
+        scheduled_end: '2026-03-03T08:45:00',
+        actual_start: '2026-03-03T08:02:00',
+        door_id: 'DOOR-1',
+        status: 'unloading',
+        load_type: 'palletized',
+        estimated_duration_min: 45,
+    },
+    {
+        id: 'appt-002',
+        po_number: 'PO-4432',
+        carrier_name: 'Northstar Freight',
+        scheduled_start: '2026-03-03T09:30:00',
+        scheduled_end: '2026-03-03T11:00:00',
+        door_id: 'DOOR-1',
+        status: 'yard_queue',
+        load_type: 'palletized',
+        estimated_duration_min: 90,
+    },
+    {
+        id: 'appt-003',
+        po_number: 'PO-1109',
+        carrier_name: 'Amazon Relay',
+        scheduled_start: '2026-03-03T09:00:00',
+        scheduled_end: '2026-03-03T10:00:00',
+        door_id: 'DOOR-2',
+        status: 'delayed',
+        load_type: 'floor-loaded',
+        estimated_duration_min: 60,
+    },
+    {
+        id: 'appt-004',
+        po_number: 'PO-9201',
+        carrier_name: 'Swift Trans',
+        scheduled_start: '2026-03-03T08:00:00',
+        scheduled_end: '2026-03-03T08:30:00',
+        actual_start: '2026-03-03T08:05:00',
+        door_id: 'DOOR-4',
+        status: 'unloading',
+        load_type: 'palletized',
+        estimated_duration_min: 30,
+    },
+    {
+        id: 'appt-005',
+        po_number: 'PO-3310',
+        carrier_name: 'DHL Express',
+        scheduled_start: '2026-03-03T14:00:00',
+        scheduled_end: '2026-03-03T15:30:00',
+        door_id: 'DOOR-3',
+        status: 'scheduled',
+        load_type: 'palletized',
+        estimated_duration_min: 90,
+    },
+];
+
+/** Trucks waiting in the yard queue (no door assigned yet) */
+export const MOCK_YARD_QUEUE: Appointment[] = [
+    {
+        id: 'appt-006',
+        po_number: 'PO-5512',
+        carrier_name: 'Apex Trans',
+        scheduled_start: '2026-03-03T10:15:00',
+        status: 'yard_queue',
+        load_type: 'palletized',
+        estimated_duration_min: 45,
+    },
+    {
+        id: 'appt-007',
+        po_number: 'PO-7723',
+        carrier_name: 'FedEx Express',
+        scheduled_start: '2026-03-03T10:30:00',
+        status: 'yard_queue',
+        load_type: 'floor-loaded',
+        estimated_duration_min: 60,
+    },
+];

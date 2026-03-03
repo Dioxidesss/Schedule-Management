@@ -1,0 +1,50 @@
+import type { Device } from '../types/device';
+
+export const MOCK_DEVICES: Device[] = [
+    {
+        id: 'K-WC-001',
+        name: 'Gate A iPad',
+        model: 'iPad Pro 12.9" (Gen 5)',
+        role: 'gatekeeper',
+        location: 'West Coast DC - Gate A',
+        status: 'online',
+        last_heartbeat_at: '2026-03-03T22:00:00',
+    },
+    {
+        id: 'K-WC-004',
+        name: 'Break Room Tablet',
+        model: 'Galaxy Tab S8',
+        role: 'loading_dock',
+        location: 'West Coast DC - Break Room',
+        status: 'online',
+        last_heartbeat_at: '2026-03-03T21:57:00',
+    },
+    {
+        id: 'K-TX-102',
+        name: 'Dock 3 Kiosk',
+        model: 'Elo Touch 22"',
+        role: 'loading_dock',
+        location: 'Texas Hub - Dock 3',
+        door_id: 'DOOR-3',
+        status: 'offline',
+        last_heartbeat_at: '2026-03-03T19:00:00',
+    },
+    {
+        id: 'K-NJ-201',
+        name: 'Security Check iPad',
+        model: 'iPad Air (Gen 4)',
+        role: 'gatekeeper',
+        location: 'NJ Port - Security Check',
+        status: 'online',
+        last_heartbeat_at: '2026-03-03T22:01:00',
+    },
+    {
+        id: 'K-CH-305',
+        name: 'Receiving Kiosk',
+        model: 'Dell OptiPlex Micro',
+        role: 'loading_dock',
+        location: 'Chicago Depot - Receiving',
+        status: 'online',
+        last_heartbeat_at: '2026-03-03T21:50:00',
+    },
+];
