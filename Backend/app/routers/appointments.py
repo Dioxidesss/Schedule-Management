@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, Header, Request, status
 from pydantic import BaseModel
 
 from app.core.ai import estimate_scheduled_end
-from app.core.db import enrich_appointment
+from app.core.db import enrich_appointment, get_plan_feature_flags
 from app.core.errors import ErrorCode, api_error
 from app.core.realtime import build_envelope, publish
 from app.core.state_machine import (
@@ -125,16 +125,25 @@ async def create_appointment(
     if idempotency_key and idempotency_key in _idempotency_cache:
         return _idempotency_cache[idempotency_key]
 
-    # Resolve / estimate scheduled_end
+    # Resolve / estimate scheduled_end — gated on ai_autopilot feature flag
+    # ai_logic.md: SCHEDULE END PREDICTION is premium-only
     if body.scheduled_end is None:
-        # Ensure scheduled_start is timezone-aware for estimate
-        sched_start_utc = body.scheduled_start
-        if sched_start_utc.tzinfo is None:
-            sched_start_utc = sched_start_utc.replace(tzinfo=timezone.utc)
-        scheduled_end_dt = estimate_scheduled_end(
-            str(facility_id), body.carrier_name, body.load_type, sched_start_utc
-        )
-        scheduled_end_str = scheduled_end_dt.isoformat()
+        flags = get_plan_feature_flags(str(current_user.company_id))
+        if flags.get("ai_autopilot"):
+            # Premium: use ML duration model
+            sched_start_utc = body.scheduled_start
+            if sched_start_utc.tzinfo is None:
+                sched_start_utc = sched_start_utc.replace(tzinfo=timezone.utc)
+            scheduled_end_dt = estimate_scheduled_end(
+                str(facility_id), body.carrier_name, body.load_type, sched_start_utc
+            )
+            scheduled_end_str = scheduled_end_dt.isoformat()
+        else:
+            # Free plan: caller must supply scheduled_end
+            raise api_error(
+                ErrorCode.PLAN_CHANGE_NOT_ALLOWED, 422,
+                "scheduled_end is required on free plan (AI prediction is a premium feature).",
+            )
     else:
         scheduled_end_str = body.scheduled_end.isoformat()
 
