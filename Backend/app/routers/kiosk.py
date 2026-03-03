@@ -112,8 +112,9 @@ async def gatehouse_check_in(body: CheckInRequest, device: GatehouseDevice):
     appt = (result.data or [None])[0]
     if not appt:
         raise api_error(
-            ErrorCode.APPOINTMENT_NOT_FOUND, 404,
-            f"No scheduled/queued appointment found for identifier '{body.identifier}'."
+            ErrorCode.CHECKIN_MATCH_NOT_FOUND, 404,
+            f"No appointment match for PO/identifier in facility/day window.",
+            {"identifier": body.identifier},
         )
 
     appt_id = appt["id"]

@@ -86,7 +86,7 @@ async def get_device(
         raise api_error(ErrorCode.DEVICE_TOKEN_INVALID, 401, "Device not found.")
 
     if device_row.get("device_token") != credentials.credentials:
-        raise api_error(ErrorCode.DEVICE_TOKEN_INVALID, 401, "Device token revoked.")
+        raise api_error(ErrorCode.DEVICE_TOKEN_REVOKED, 401, "Device token invalidated by unpair/signout.")
 
     return DeviceContext(
         device_id=uuid.UUID(device_row["id"]),

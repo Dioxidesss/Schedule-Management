@@ -77,9 +77,9 @@ async def create_pairing_code(
 
     # Schema constraint: gatehouse has no door, loading_dock requires door
     if body.role == "gatehouse" and body.door_id is not None:
-        raise api_error(ErrorCode.FORBIDDEN_ROLE, 422, "Gatehouse devices must not have a door_id.")
+        raise api_error(ErrorCode.PAIRING_ROLE_DOOR_MISMATCH, 422, "Gatehouse devices must not have a door_id.")
     if body.role == "loading_dock" and body.door_id is None:
-        raise api_error(ErrorCode.FORBIDDEN_ROLE, 422, "loading_dock devices require a door_id.")
+        raise api_error(ErrorCode.PAIRING_ROLE_DOOR_MISMATCH, 422, "loading_dock devices require a door_id.")
 
     # Generate cryptographically random 6-digit code
     code = f"{secrets.randbelow(1_000_000):06d}"
@@ -153,14 +153,14 @@ async def pair_device(body: PairDeviceRequest):
 
     code_row = (result.data or [None])[0]
     if not code_row:
-        raise api_error(ErrorCode.DEVICE_PAIRING_CODE_INVALID, 400, "Pairing code not found.")
+        raise api_error(ErrorCode.PAIRING_CODE_INVALID, 404, "Pairing code not found.")
 
     if code_row["used_at"] is not None:
-        raise api_error(ErrorCode.DEVICE_PAIRING_CODE_INVALID, 400, "Pairing code already used.")
+        raise api_error(ErrorCode.PAIRING_CODE_USED, 409, "Pairing code already consumed.")
 
     expires_at = datetime.fromisoformat(code_row["expires_at"].replace("Z", "+00:00"))
     if now > expires_at:
-        raise api_error(ErrorCode.DEVICE_PAIRING_CODE_INVALID, 400, "Pairing code expired.")
+        raise api_error(ErrorCode.PAIRING_CODE_EXPIRED, 410, "Pairing code expired.")
 
     facility_id = code_row["facility_id"]
 
@@ -337,7 +337,7 @@ async def unpair_device(
     )
     dev = dev_result.data
     if not dev:
-        raise api_error(ErrorCode.INTERNAL_ERROR, 404, "Device not found.", {"device_id": str(device_id)})
+        raise api_error(ErrorCode.DEVICE_SCOPE_VIOLATION, 403, "Device not found in caller scope.", {"device_id": str(device_id)})
 
     # Verify admin_pin if hash is stored
     if dev.get("admin_pin_hash"):

@@ -44,6 +44,7 @@ class ErrorCode(str, Enum):
     PAIRING_CODE_USED = "pairing_code_used"
     PAIRING_ROLE_DOOR_MISMATCH = "pairing_role_door_mismatch"
     HEARTBEAT_STALE_TIMESTAMP = "heartbeat_stale_timestamp"
+    DEVICE_TOKEN_INVALID = "device_token_invalid"
     DEVICE_TOKEN_REVOKED = "device_token_revoked"
 
     # Team Management / Invites
