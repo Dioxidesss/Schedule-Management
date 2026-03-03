@@ -7,3 +7,11 @@ stitch_isomer/
 
 # Ignore all Microsoft Word temporary lock files
 ~$*.docx
+
+Walkthroughs
+
+# Environment files
+.env
+.env.*
+!.env.example
+
