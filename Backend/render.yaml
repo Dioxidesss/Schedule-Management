@@ -1,0 +1,45 @@
+# render.yaml — Isomer backend service definitions
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Defines:
+#   1. web      — FastAPI application (Gunicorn + Uvicorn workers)
+#   2. overrun  — Cron job: overrun detection worker (Phase 8)
+#   3. offline  — Cron job: device offline detection worker (Phase 9+)
+
+services:
+  # ── Web API ───────────────────────────────────────────────────────────────
+  - type: web
+    name: isomer-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app.main:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # ── Overrun Detection Worker (Phase 8) ────────────────────────────────────
+  - type: cron
+    name: isomer-overrun-detector
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    schedule: "*/1 * * * *"   # every 60 seconds
+    command: python -m workers.overrun_worker
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
