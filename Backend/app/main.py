@@ -17,6 +17,7 @@ from app.routers.facilities import router as facilities_router
 from app.routers.appointments import router as appointments_router
 from app.routers.devices import router as devices_router
 from app.routers.kiosk import router as kiosk_router
+from app.routers.admin import router as admin_router
 
 
 @asynccontextmanager
@@ -83,6 +84,7 @@ app.include_router(facilities_router)
 app.include_router(appointments_router)
 app.include_router(devices_router)
 app.include_router(kiosk_router)
+app.include_router(admin_router)
 
 
 # ---------------------------------------------------------------------------

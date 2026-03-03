@@ -2,9 +2,9 @@
 # Docs: https://render.com/docs/blueprint-spec
 #
 # Defines:
-#   1. web      — FastAPI application (Gunicorn + Uvicorn workers)
-#   2. overrun  — Cron job: overrun detection worker (Phase 8)
-#   3. offline  — Cron job: device offline detection worker (Phase 9+)
+#   1. web            — FastAPI application (Gunicorn + Uvicorn workers)
+#   2. overrun        — Cron job: overrun detection worker (Phase 8, every 60s)
+#   3. invite-expiry  — Cron job: invite expiry sweep (Phase 10, daily midnight)
 
 services:
   # ── Web API ───────────────────────────────────────────────────────────────
@@ -42,4 +42,17 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: SUPABASE_JWT_SECRET
+        sync: false
+
+  # ── Invite Expiry Worker (Phase 10) ──────────────────────────────────────
+  - type: cron
+    name: isomer-invite-expiry
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    schedule: "0 0 * * *"   # daily at midnight UTC
+    command: python -m workers.invite_expiry_worker
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
