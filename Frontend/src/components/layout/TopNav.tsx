@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import IsomerLogo from '../ui/IsomerLogo';
 import Modal from '../ui/Modal';
+import { useAuthContext } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 interface NewAppointmentFormData {
     po_number: string;
@@ -27,9 +29,31 @@ const NAV_LINKS = [
 
 const TopNav: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user } = useAuthContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [form, setForm] = useState<NewAppointmentFormData>(INITIAL_FORM);
+
+    // Derive display name and initials from Supabase user metadata
+    const fullName: string =
+        (user?.user_metadata?.['full_name'] as string | undefined) ??
+        user?.email?.split('@')[0] ??
+        'User';
+    const role: string =
+        (user?.app_metadata?.['role'] as string | undefined) ?? 'Manager';
+    const initials = fullName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
+    const handleSignOut = async () => {
+        setIsDropdownOpen(false);
+        await supabase.auth.signOut();
+        navigate('/auth', { replace: true });
+    };
 
     const handleFormChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -93,11 +117,11 @@ const TopNav: React.FC = () => {
                             className="flex items-center gap-3 pl-4 border-l border-white/10"
                         >
                             <div className="text-right hidden lg:block">
-                                <p className="text-xs font-bold text-white">Alex Chen</p>
-                                <p className="text-[10px] text-slate-400">Operations Manager</p>
+                                <p className="text-xs font-bold text-white">{fullName}</p>
+                                <p className="text-[10px] text-slate-400 capitalize">{role}</p>
                             </div>
                             <div className="size-9 rounded-full bg-primary/20 border border-primary/40 overflow-hidden shadow-[0_0_10px_rgba(0,229,255,0.2)] hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition-all flex items-center justify-center text-primary font-bold text-sm">
-                                AC
+                                {initials}
                             </div>
                         </button>
 
@@ -113,7 +137,7 @@ const TopNav: React.FC = () => {
                                     onClick={() => setIsDropdownOpen(false)}
                                 >
                                     <span className="material-symbols-outlined text-lg" aria-hidden="true">person</span>
-                                    Profile &amp; Theme
+                                    Profile &amp; Settings
                                 </Link>
                                 <Link
                                     to="/admin/team"
@@ -129,7 +153,7 @@ const TopNav: React.FC = () => {
                                     type="button"
                                     role="menuitem"
                                     className="flex w-full items-center gap-3 p-3 hover:bg-delayed/10 text-sm text-slate-400 hover:text-delayed transition-colors"
-                                    onClick={() => setIsDropdownOpen(false)}
+                                    onClick={handleSignOut}
                                 >
                                     <span className="material-symbols-outlined text-lg" aria-hidden="true">logout</span>
                                     Sign Out
@@ -165,12 +189,12 @@ const TopNav: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <label htmlFor="carrier_name" className="text-slate-300 text-sm font-medium tracking-wide">
+                    <label htmlFor="carrier_name_select" className="text-slate-300 text-sm font-medium tracking-wide">
                         Carrier Name
                     </label>
                     <div className="relative group">
                         <select
-                            id="carrier_name"
+                            id="carrier_name_select"
                             name="carrier_name"
                             value={form.carrier_name}
                             onChange={handleFormChange}

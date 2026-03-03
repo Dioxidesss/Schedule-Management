@@ -1,13 +1,65 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import IsomerLogo from '../../components/ui/IsomerLogo';
+import { supabase } from '../../lib/supabase';
 
 type AuthTab = 'login' | 'signup';
 
 const AuthPage: React.FC = () => {
+    const navigate = useNavigate();
     const [tab, setTab] = useState<AuthTab>('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const clearError = () => setError(null);
+
+    const handleSubmit = async () => {
+        setError(null);
+        setIsLoading(true);
+        try {
+            if (tab === 'login') {
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (signInError) throw signInError;
+            } else {
+                const { error: signUpError } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { full_name: fullName },
+                    },
+                });
+                if (signUpError) throw signUpError;
+            }
+            navigate('/dashboard', { replace: true });
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error ? err.message : 'An unexpected error occurred.';
+            setError(message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setError(null);
+        const { error: oauthError } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/dashboard`,
+            },
+        });
+        if (oauthError) setError(oauthError.message);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') handleSubmit();
+    };
 
     return (
         <div className="h-screen w-screen flex items-center justify-center bg-background-dark font-display selection:bg-primary/30 overflow-hidden relative">
@@ -33,7 +85,7 @@ const AuthPage: React.FC = () => {
                             <button
                                 key={t}
                                 type="button"
-                                onClick={() => setTab(t)}
+                                onClick={() => { setTab(t); clearError(); }}
                                 className={`flex-1 py-4 text-sm font-bold uppercase tracking-widest transition-colors ${tab === t
                                         ? 'text-primary border-b-2 border-primary bg-primary/5'
                                         : 'text-slate-400 hover:text-white'
@@ -53,6 +105,7 @@ const AuthPage: React.FC = () => {
                                     type="text"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
+                                    onKeyDown={handleKeyDown}
                                     placeholder="Alex Chen"
                                     autoComplete="name"
                                     className="w-full h-12 rounded-lg bg-background-dark border border-surface-border text-white placeholder:text-slate-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none px-4 transition-all"
@@ -67,6 +120,7 @@ const AuthPage: React.FC = () => {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                onKeyDown={handleKeyDown}
                                 placeholder="you@company.com"
                                 autoComplete="email"
                                 className="w-full h-12 rounded-lg bg-background-dark border border-surface-border text-white placeholder:text-slate-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none px-4 transition-all"
@@ -80,17 +134,38 @@ const AuthPage: React.FC = () => {
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                onKeyDown={handleKeyDown}
                                 placeholder="••••••••"
                                 autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
                                 className="w-full h-12 rounded-lg bg-background-dark border border-surface-border text-white placeholder:text-slate-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none px-4 transition-all"
                             />
                         </div>
 
+                        {/* Inline error message */}
+                        {error && (
+                            <div
+                                role="alert"
+                                className="flex items-start gap-2 px-4 py-3 rounded-lg bg-delayed/10 border border-delayed/30 text-delayed text-sm animate-fade-in"
+                            >
+                                <span className="material-symbols-outlined text-[16px] mt-0.5 shrink-0" aria-hidden="true">error</span>
+                                <span>{error}</span>
+                            </div>
+                        )}
+
                         <button
                             type="button"
-                            className="w-full h-12 bg-primary text-background-dark font-bold rounded-lg shadow-glow hover:bg-[#60f0ff] transition-all mt-2 uppercase tracking-wider"
+                            onClick={handleSubmit}
+                            disabled={isLoading || !email || !password}
+                            className="w-full h-12 bg-primary text-background-dark font-bold rounded-lg shadow-glow hover:bg-[#60f0ff] transition-all mt-2 uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {tab === 'login' ? 'Sign In' : 'Create Account'}
+                            {isLoading ? (
+                                <>
+                                    <span className="material-symbols-outlined animate-spin text-[18px]" aria-hidden="true">refresh</span>
+                                    {tab === 'login' ? 'Signing in...' : 'Creating account...'}
+                                </>
+                            ) : (
+                                tab === 'login' ? 'Sign In' : 'Create Account'
+                            )}
                         </button>
 
                         <div className="flex items-center gap-3 text-slate-500 text-xs">
@@ -101,6 +176,7 @@ const AuthPage: React.FC = () => {
 
                         <button
                             type="button"
+                            onClick={handleGoogleSignIn}
                             className="w-full h-12 border border-surface-border text-slate-300 hover:text-white hover:border-primary/50 rounded-lg font-medium transition-all flex items-center justify-center gap-3"
                         >
                             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">

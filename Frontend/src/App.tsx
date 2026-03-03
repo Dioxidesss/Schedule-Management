@@ -1,13 +1,17 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import AuthProvider from './context/AuthProvider';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Fullscreen pages (no AppShell)
-const AuthPage = lazy(() => import('./pages/auth/AuthPage'));
+// Public pages — loaded eagerly since they're entry points
+import AuthPage from './pages/auth/AuthPage';
+
+// Kiosk pages — fullscreen, no auth required (device token auth is separate)
 const PairPage = lazy(() => import('./pages/kiosk/PairPage'));
 const GatehousePage = lazy(() => import('./pages/kiosk/GatehousePage'));
 const DockPage = lazy(() => import('./pages/kiosk/DockPage'));
 
-// AppShell pages
+// Authenticated manager/admin pages
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const ProfilePage = lazy(() => import('./pages/dashboard/ProfilePage'));
 const BillingPage = lazy(() => import('./pages/admin/BillingPage'));
@@ -24,33 +28,63 @@ const PageLoader: React.FC = () => (
 
 function App() {
   return (
-    <Router>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/auth" replace />} />
+    <AuthProvider>
+      <Router>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Default: redirect / to /auth */}
+            <Route path="/" element={<Navigate to="/auth" replace />} />
 
-          {/* Auth */}
-          <Route path="/auth" element={<AuthPage />} />
+            {/* Public auth page */}
+            <Route path="/auth" element={<AuthPage />} />
 
-          {/* Kiosk routes (fullscreen, no nav) */}
-          <Route path="/kiosk/pair" element={<PairPage />} />
-          <Route path="/kiosk/gatehouse" element={<GatehousePage />} />
-          <Route path="/kiosk/dock/:doorId" element={<DockPage />} />
+            {/* Kiosk routes — publicly accessible, device tokens are handled separately */}
+            <Route path="/kiosk/pair" element={<PairPage />} />
+            <Route path="/kiosk/gatehouse" element={<GatehousePage />} />
+            <Route path="/kiosk/dock/:doorId" element={<DockPage />} />
 
-          {/* Manager dashboard routes */}
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/dashboard/profile" element={<ProfilePage />} />
+            {/* Protected manager routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin routes */}
-          <Route path="/admin/billing" element={<BillingPage />} />
-          <Route path="/admin/team" element={<TeamPage />} />
+            {/* Protected admin routes */}
+            <Route
+              path="/admin/billing"
+              element={
+                <ProtectedRoute>
+                  <BillingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/team"
+              element={
+                <ProtectedRoute>
+                  <TeamPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/auth" replace />} />
-        </Routes>
-      </Suspense>
-    </Router>
+            {/* Catch-all: unknown routes go to auth */}
+            <Route path="*" element={<Navigate to="/auth" replace />} />
+          </Routes>
+        </Suspense>
+      </Router>
+    </AuthProvider>
   );
 }
 
