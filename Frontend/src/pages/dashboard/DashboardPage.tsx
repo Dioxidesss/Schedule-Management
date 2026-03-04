@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AppShell from '../../components/layout/AppShell';
-import { MOCK_APPOINTMENTS, MOCK_YARD_QUEUE } from '../../mocks/appointments';
+import { useAppointments } from '../../hooks/useAppointments';
+import type { Appointment } from '../../types/appointment';
 
 
 
@@ -199,7 +200,7 @@ const NewAppointmentModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 };
 
 // ─── Queue Sidebar ────────────────────────────────────────────────────────────
-const QueueSidebar: React.FC<{ onNewAppt: () => void }> = ({ onNewAppt }) => (
+const QueueSidebar: React.FC<{ onNewAppt: () => void; yardQueue: Appointment[] }> = ({ onNewAppt, yardQueue }) => (
     <aside className="w-72 flex flex-col border-r border-white/10 bg-background-dark/40 flex-shrink-0">
         <div className="p-4 border-b border-white/10">
             <div className="flex items-center justify-between mb-2">
@@ -212,7 +213,10 @@ const QueueSidebar: React.FC<{ onNewAppt: () => void }> = ({ onNewAppt }) => (
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
-            {MOCK_YARD_QUEUE.map((appt) => (
+            {yardQueue.length === 0 && (
+                <p className="text-xs text-slate-500 text-center py-8 italic">No trucks in queue.</p>
+            )}
+            {yardQueue.map((appt) => (
                 <div
                     key={appt.id}
                     className="p-3 bg-surface/40 hover:bg-surface border border-white/5 rounded-lg transition-all cursor-move group"
@@ -409,9 +413,7 @@ const DashboardFooter: React.FC = () => (
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const DashboardPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    // Silence unused import warning — mock data is used by QueueSidebar via MOCK_YARD_QUEUE
-    void MOCK_APPOINTMENTS;
+    const { yardQueue } = useAppointments();
 
     return (
         <AppShell>
@@ -419,7 +421,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex h-full w-full flex-col overflow-hidden -m-0">
 
                 <main className="flex flex-1 overflow-hidden">
-                    <QueueSidebar onNewAppt={() => setIsModalOpen(true)} />
+                    <QueueSidebar onNewAppt={() => setIsModalOpen(true)} yardQueue={yardQueue} />
                     <GanttSection onNewAppt={() => setIsModalOpen(true)} />
                     <InsightsSidebar />
                 </main>
