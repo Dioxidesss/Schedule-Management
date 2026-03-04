@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import type { Manager, Invite } from '../types/team';
 import { MOCK_MANAGERS, MOCK_INVITES } from '../mocks/team';
 
@@ -16,10 +16,8 @@ interface UseTeamReturn {
 /**
  * Returns all team managers and pending invites.
  *
- * DEV: Set VITE_USE_MOCKS=true in .env.local to return mock data instantly.
- * PROD: Remove or set VITE_USE_MOCKS=false to fetch from Supabase.
- *
- * Tables: public.managers, public.invites
+ * DEV:  Set VITE_USE_MOCKS=true  → returns mock data instantly.
+ * PROD: Set VITE_USE_MOCKS=false → calls GET /admin/team.
  */
 export function useTeam(): UseTeamReturn {
     const [managers, setManagers] = useState<Manager[]>(USE_MOCKS ? MOCK_MANAGERS : []);
@@ -28,27 +26,36 @@ export function useTeam(): UseTeamReturn {
     const [error, setError] = useState<string | null>(null);
 
     const fetchAll = useCallback(async () => {
-        // ── MOCK MODE ─────────────────────────────────────────────────────────
         if (USE_MOCKS) return;
-
-        // ── SUPABASE MODE ─────────────────────────────────────────────────────
         setLoading(true);
         setError(null);
-
-        const [managersRes, invitesRes] = await Promise.all([
-            supabase.from('managers').select('*').order('full_name', { ascending: true }),
-            supabase.from('invites').select('*').eq('status', 'pending').order('full_name', { ascending: true }),
-        ]);
-
-        if (managersRes.error) { setError(managersRes.error.message); setLoading(false); return; }
-        if (invitesRes.error) { setError(invitesRes.error.message); setLoading(false); return; }
-
-        setManagers((managersRes.data as Manager[]) ?? []);
-        setInvites((invitesRes.data as Invite[]) ?? []);
-        setLoading(false);
+        try {
+            const rows = await api.team.listManagers();
+            // Backend returns managers + invites mixed; split by status field presence
+            const mgrs = rows.filter(
+                (r) => !('invite_token' in r)
+            ) as unknown as Manager[];
+            const invs = rows.filter(
+                (r) => 'invite_token' in r
+            ) as unknown as Invite[];
+            setManagers(mgrs);
+            setInvites(invs);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load team');
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    useEffect(() => { void fetchAll(); }, [fetchAll]);
+    useEffect(() => {
+        void fetchAll();
+    }, [fetchAll]);
 
-    return { managers, invites, loading, error, refetch: () => void fetchAll() };
+    return {
+        managers,
+        invites,
+        loading,
+        error,
+        refetch: () => void fetchAll(),
+    };
 }

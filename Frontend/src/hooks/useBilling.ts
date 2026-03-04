@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import type { Subscription, Invoice } from '../types/billing';
 import { MOCK_SUBSCRIPTION, MOCK_INVOICES } from '../mocks/billing';
 
@@ -15,10 +15,8 @@ interface UseBillingReturn {
 /**
  * Returns the tenant's active subscription and invoice history.
  *
- * DEV: Set VITE_USE_MOCKS=true in .env.local to return mock data instantly.
- * PROD: Remove or set VITE_USE_MOCKS=false to fetch from Supabase.
- *
- * Tables: public.subscriptions, public.invoices
+ * DEV:  Set VITE_USE_MOCKS=true  → returns mock data instantly.
+ * PROD: Set VITE_USE_MOCKS=false → calls GET /admin/billing/subscription + invoices.
  */
 export function useBilling(): UseBillingReturn {
     const [subscription, setSubscription] = useState<Subscription | null>(
@@ -29,29 +27,29 @@ export function useBilling(): UseBillingReturn {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // ── MOCK MODE ─────────────────────────────────────────────────────────
         if (USE_MOCKS) return;
 
-        // ── SUPABASE MODE ─────────────────────────────────────────────────────
         let cancelled = false;
 
         const fetchAll = async () => {
             setLoading(true);
             setError(null);
-
-            const [subRes, invRes] = await Promise.all([
-                supabase.from('subscriptions').select('*').eq('is_active', true).limit(1).maybeSingle(),
-                supabase.from('invoices').select('*').order('date', { ascending: false }).limit(10),
-            ]);
-
-            if (cancelled) return;
-
-            if (subRes.error) { setError(subRes.error.message); setLoading(false); return; }
-            if (invRes.error) { setError(invRes.error.message); setLoading(false); return; }
-
-            setSubscription((subRes.data as Subscription | null) ?? null);
-            setInvoices((invRes.data as Invoice[]) ?? []);
-            setLoading(false);
+            try {
+                const [sub, invs] = await Promise.all([
+                    api.billing.getSubscription(),
+                    api.billing.getPaymentMethods(),
+                ]);
+                if (!cancelled) {
+                    setSubscription(sub as unknown as Subscription);
+                    setInvoices(invs as unknown as Invoice[]);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setError(err instanceof Error ? err.message : 'Failed to load billing');
+                }
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
         };
 
         void fetchAll();

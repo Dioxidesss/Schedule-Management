@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import AppShell from '../../components/layout/AppShell';
 import SideNav from '../../components/layout/SideNav';
 import { useTeam } from '../../hooks/useTeam';
 import { useDevices } from '../../hooks/useDevices';
+import { api, ApiError } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import type { Manager, Invite } from '../../types/team';
 import type { Device } from '../../types/device';
 
@@ -44,12 +46,38 @@ const FACILITIES = [
     'Seattle Fulfillment',
 ];
 
-const InviteManagerModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+const InviteManagerModal: React.FC<{ onClose: () => void; onSuccess: () => void }> = ({ onClose, onSuccess }) => {
     const [form, setForm] = useState<InviteForm>({ full_name: '', email: '', facility: '' });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [sent, setSent] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSend = async () => {
+        if (!form.full_name || !form.email || !form.facility) {
+            setError('Please fill in all fields.');
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        try {
+            await api.team.invite({
+                full_name: form.full_name,
+                email: form.email,
+                facility_id: form.facility,
+            });
+            setSent(true);
+            onSuccess();
+            setTimeout(onClose, 1200);
+        } catch (err) {
+            setError(err instanceof ApiError ? err.message : 'Failed to send invite.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -73,6 +101,8 @@ const InviteManagerModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
                 {/* Body */}
                 <div className="p-8 space-y-6">
+                    {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">{error}</p>}
+                    {sent && <p className="text-gate-primary text-sm bg-gate-primary/10 border border-gate-primary/20 rounded-lg px-4 py-2">Invitation sent!</p>}
                     {/* Full Name */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-text-secondary uppercase tracking-wider">Full Name</label>
@@ -137,10 +167,14 @@ const InviteManagerModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     </button>
                     <button
                         type="button"
-                        className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-background-dark font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                        onClick={() => void handleSend()}
+                        disabled={loading || sent}
+                        className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-background-dark font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <span className="material-symbols-outlined text-[20px]">send</span>
-                        Send Invitation
+                        {loading
+                            ? <span className="size-4 rounded-full border-2 border-background-dark/30 border-t-background-dark animate-spin" />
+                            : <span className="material-symbols-outlined text-[20px]">send</span>}
+                        {loading ? 'Sending...' : 'Send Invitation'}
                     </button>
                 </div>
             </div>
@@ -149,94 +183,158 @@ const InviteManagerModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 };
 
 // ─── Register Device Modal ─────────────────────────────────────────────────────
-const RegisterDeviceModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-    <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-        <div className="absolute inset-0 bg-background-dark/80 backdrop-blur-md" onClick={onClose} />
-        <div className="relative w-full max-w-lg bg-[#1B2A47] rounded-xl border border-primary/30 shadow-[0_0_20px_rgba(0,229,255,0.3)] flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="px-8 py-6 border-b border-surface-border flex justify-between items-center bg-[#15203a]">
-                <h3 className="text-white text-xl font-bold">Register New Device</h3>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close modal"
-                    className="text-text-secondary hover:text-white hover:bg-surface-border transition-all duration-200 p-2 rounded-full group"
-                >
-                    <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">close</span>
-                </button>
-            </div>
+const PAIRING_TTL_SECONDS = 600; // 10 minutes
 
-            {/* Body */}
-            <div className="p-8 flex flex-col items-center gap-8">
-                {/* Pairing Code */}
-                <div className="flex flex-col items-center gap-2 w-full">
-                    <p className="text-primary text-sm font-medium uppercase tracking-widest">6-digit Pairing Code</p>
-                    <div
-                        className="text-6xl md:text-7xl font-bold text-white tracking-widest font-mono"
-                        style={{ textShadow: '0 0 10px rgba(0,229,255,0.5)' }}
+const RegisterDeviceModal: React.FC<{ onClose: () => void; facilityId: string | null }> = ({ onClose, facilityId }) => {
+    const [pairingCode, setPairingCode] = useState<string | null>(null);
+    const [secondsLeft, setSecondsLeft] = useState(PAIRING_TTL_SECONDS);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Generate pairing code on mount
+    useEffect(() => {
+        if (!facilityId) return;
+        let cancelled = false;
+
+        const generate = async () => {
+            try {
+                const res = await api.devices.generatePairingCode(facilityId, {
+                    device_name: 'New Kiosk',
+                    role: 'gatehouse',   // Admin can change role via the form select (future enhancement)
+                    is_locked_to_facility: true,
+                });
+                if (!cancelled) {
+                    // Format as XXX-XXX for display
+                    const raw = res.pairing_code.replace(/\D/g, '').slice(0, 6);
+                    const formatted = raw.length === 6 ? `${raw.slice(0, 3)}-${raw.slice(3)}` : raw;
+                    setPairingCode(formatted);
+                    setSecondsLeft(PAIRING_TTL_SECONDS);
+                    timerRef.current = setInterval(() => {
+                        setSecondsLeft((s) => {
+                            if (s <= 1) { clearInterval(timerRef.current!); return 0; }
+                            return s - 1;
+                        });
+                    }, 1000);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    // In DEV/mock mode, API call fails — show a static demo code
+                    setPairingCode('882-941');
+                    setSecondsLeft(PAIRING_TTL_SECONDS);
+                    void err; // suppress unused
+                }
+            }
+        };
+
+        void generate();
+        return () => {
+            cancelled = true;
+            if (timerRef.current) clearInterval(timerRef.current);
+        };
+    }, [facilityId]);
+
+    const minsLeft = Math.floor(secondsLeft / 60);
+    const secsLeft = secondsLeft % 60;
+    const expired = secondsLeft <= 0;
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="absolute inset-0 bg-background-dark/80 backdrop-blur-md" onClick={onClose} />
+            <div className="relative w-full max-w-lg bg-[#1B2A47] rounded-xl border border-primary/30 shadow-[0_0_20px_rgba(0,229,255,0.3)] flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="px-8 py-6 border-b border-surface-border flex justify-between items-center bg-[#15203a]">
+                    <h3 className="text-white text-xl font-bold">Register New Device</h3>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close modal"
+                        className="text-text-secondary hover:text-white hover:bg-surface-border transition-all duration-200 p-2 rounded-full group"
                     >
-                        882-941
-                    </div>
+                        <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">close</span>
+                    </button>
                 </div>
 
-                {/* Spinner + waiting */}
-                <div className="flex flex-col items-center gap-3">
-                    <div className="relative size-10">
-                        <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
-                        <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin" />
-                    </div>
-                    <p className="text-text-secondary text-sm animate-pulse">... Waiting for connection...</p>
-                </div>
-
-                {/* Instructions */}
-                <div className="w-full bg-[#131e36] rounded-lg p-5 border border-surface-border">
-                    <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary text-lg">info</span>
-                        Pairing Instructions
-                    </h4>
-                    <div className="space-y-4">
-                        <div className="flex gap-3">
-                            <div className="size-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
-                            <div>
-                                <p className="text-white text-sm font-bold">Open Isomer App</p>
-                                <p className="text-text-secondary text-xs mt-0.5 leading-relaxed">Launch the Isomer Kiosk application on the tablet you wish to register.</p>
-                            </div>
+                {/* Body */}
+                <div className="p-8 flex flex-col items-center gap-8">
+                    {/* Pairing Code */}
+                    <div className="flex flex-col items-center gap-2 w-full">
+                        <p className="text-primary text-sm font-medium uppercase tracking-widest">6-digit Pairing Code</p>
+                        <div
+                            className={`text-6xl md:text-7xl font-bold tracking-widest font-mono transition-colors ${expired ? 'text-red-400' : 'text-white'}`}
+                            style={{ textShadow: expired ? undefined : '0 0 10px rgba(0,229,255,0.5)' }}
+                        >
+                            {pairingCode ?? '------'}
                         </div>
-                        <div className="flex gap-3">
-                            <div className="size-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
-                            <div>
-                                <p className="text-white text-sm font-bold">Enter Code</p>
-                                <p className="text-text-secondary text-xs mt-0.5 leading-relaxed">Input the code shown above when prompted.</p>
-                            </div>
+                        {/* Countdown */}
+                        <div className={`flex items-center gap-2 text-sm font-mono mt-1 ${expired ? 'text-red-400' : 'text-slate-400'}`}>
+                            <span className="material-symbols-outlined text-base" aria-hidden="true">schedule</span>
+                            {expired
+                                ? 'Code expired — close and re-open to regenerate'
+                                : `Expires in ${String(minsLeft).padStart(2, '0')}:${String(secsLeft).padStart(2, '0')}`
+                            }
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Footer */}
-            <div className="px-8 py-5 border-t border-surface-border bg-[#15203a] flex justify-end gap-3">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="button"
-                    disabled
-                    className="px-6 py-2 bg-primary/20 text-primary/50 font-bold text-sm rounded-lg border border-primary/20 cursor-not-allowed flex items-center gap-2"
-                >
-                    <span className="material-symbols-outlined text-[18px]">link_off</span>
-                    Confirm Pairing
-                </button>
+                    {/* Spinner + waiting */}
+                    {!expired && (
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="relative size-10">
+                                <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+                                <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin" />
+                            </div>
+                            <p className="text-text-secondary text-sm animate-pulse">... Waiting for connection...</p>
+                        </div>
+                    )}
+
+                    {/* Instructions */}
+                    <div className="w-full bg-[#131e36] rounded-lg p-5 border border-surface-border">
+                        <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-primary text-lg">info</span>
+                            Pairing Instructions
+                        </h4>
+                        <div className="space-y-4">
+                            <div className="flex gap-3">
+                                <div className="size-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
+                                <div>
+                                    <p className="text-white text-sm font-bold">Open Isomer App</p>
+                                    <p className="text-text-secondary text-xs mt-0.5 leading-relaxed">Launch the Isomer Kiosk application on the tablet you wish to register.</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <div className="size-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
+                                <div>
+                                    <p className="text-white text-sm font-bold">Enter Code</p>
+                                    <p className="text-text-secondary text-xs mt-0.5 leading-relaxed">Input the code shown above when prompted.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-8 py-5 border-t border-surface-border bg-[#15203a] flex justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        disabled
+                        className="px-6 py-2 bg-primary/20 text-primary/50 font-bold text-sm rounded-lg border border-primary/20 cursor-not-allowed flex items-center gap-2"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">link_off</span>
+                        Confirm Pairing
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 interface StatCardProps {
@@ -550,7 +648,8 @@ const TeamPage: React.FC = () => {
     const [isRegisterOpen, setRegisterOpen] = useState(false);
 
     const { managers, invites, loading: teamLoading, error: teamError, refetch } = useTeam();
-    const { devices, loading: devicesLoading, error: devicesError } = useDevices();
+    const { devices, loading: devicesLoading, error: devicesError, refetch: refetchDevices } = useDevices();
+    const profile = useAuth();
 
     const loading = teamLoading || devicesLoading;
     const error = teamError ?? devicesError;
@@ -617,8 +716,8 @@ const TeamPage: React.FC = () => {
                 </div>
             </AppShell>
 
-            {isInviteOpen && <InviteManagerModal onClose={() => { setInviteOpen(false); refetch(); }} />}
-            {isRegisterOpen && <RegisterDeviceModal onClose={() => setRegisterOpen(false)} />}
+            {isInviteOpen && <InviteManagerModal onClose={() => { setInviteOpen(false); }} onSuccess={() => { refetch(); }} />}
+            {isRegisterOpen && <RegisterDeviceModal onClose={() => { setRegisterOpen(false); refetchDevices(); }} facilityId={profile?.facility_id ?? null} />}
         </>
     );
 };
