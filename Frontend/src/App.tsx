@@ -3,8 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import AuthProvider from './context/AuthProvider';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Public pages — loaded eagerly since they're entry points
+// Public pages
 import AuthPage from './pages/auth/AuthPage';
+const LandingPage = lazy(() => import('./pages/public/LandingPage'));
 
 // Kiosk pages — fullscreen, no auth required (device token auth is separate)
 const PairPage = lazy(() => import('./pages/kiosk/PairPage'));
@@ -32,8 +33,8 @@ function App() {
       <Router>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* Default: redirect / to /auth */}
-            <Route path="/" element={<Navigate to="/auth" replace />} />
+            {/* Landing page — self-redirects to /dashboard if signed in */}
+            <Route path="/" element={<LandingPage />} />
 
             {/* Public auth page */}
             <Route path="/auth" element={<AuthPage />} />
