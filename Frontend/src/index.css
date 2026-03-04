@@ -70,7 +70,8 @@
 
 @layer utilities {
 
-  /* Gantt chart column grid */
+  /* Gantt chart column grid — .gantt-grid matches the HTML reference class name */
+  .gantt-grid,
   .gantt-grid-bg {
     background-size: 80px 100%;
     background-image: linear-gradient(to right,

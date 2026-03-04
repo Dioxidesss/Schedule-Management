@@ -12,7 +12,7 @@ const AppShell: React.FC<AppShellProps> = ({ children, sidebar }) => (
         <TopNav />
         <div className="flex flex-1 overflow-hidden">
             {sidebar}
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-hidden">
                 {children}
             </main>
         </div>
