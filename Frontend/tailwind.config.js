@@ -17,7 +17,8 @@ export default {
                 "background-light": "#f5f8f8",
                 // Surfaces
                 surface: "#14213d",
-                "surface-dark": "#131c36",
+                "surface-dark": "#1B2A47",
+                "surface-darker": "#152036",
                 "surface-highlight": "#1c2b55",
                 "surface-border": "#233358",
                 "slate-navy": "#1B2A47",
@@ -66,6 +67,21 @@ export default {
                     "linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px)",
                 "gantt-grid":
                     "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px)",
+            },
+            keyframes: {
+                float: {
+                    "0%, 100%": { transform: "translateY(0)" },
+                    "50%": { transform: "translateY(-10px)" },
+                },
+                flow: {
+                    "0%": { transform: "translateX(-100%)" },
+                    "100%": { transform: "translateX(100%)" },
+                },
+            },
+            animation: {
+                float: "float 6s ease-in-out infinite",
+                "float-delayed": "float 7s ease-in-out infinite 1s",
+                flow: "flow 3s linear infinite",
             },
         },
     },
